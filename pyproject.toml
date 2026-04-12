@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vermyth"
+version = "0.1.0"
+description = "A semantic execution language for AI systems."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0",
+    "python-ulid",
+    "anthropic",
+]
+
+[project.scripts]
+vermyth = "vermyth.cli.main:main"
+vermyth-mcp = "vermyth.mcp.server:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["vermyth*"]
+
+[tool.setuptools.package-data]
+vermyth = ["data/sigils/*.json", "grimoire/migrations/*.sql"]

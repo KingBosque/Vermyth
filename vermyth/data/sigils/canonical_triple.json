@@ -1,0 +1,142 @@
+[
+  {
+    "aspects": ["VOID", "FORM", "MOTION"],
+    "name": "Phantokinesis",
+    "effect_class": "NEGATION",
+    "resonance_ceiling": 0.48,
+    "contradiction_severity": "SOFT"
+  },
+  {
+    "aspects": ["VOID", "FORM", "MIND"],
+    "name": "Ghost Praxis",
+    "effect_class": "COGNITION",
+    "resonance_ceiling": 0.57,
+    "contradiction_severity": "SOFT"
+  },
+  {
+    "aspects": ["VOID", "FORM", "DECAY"],
+    "name": "Ash Lattice",
+    "effect_class": "DISSOLUTION",
+    "resonance_ceiling": 0.44,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["VOID", "FORM", "LIGHT"],
+    "name": "Blind Mirror",
+    "effect_class": "CONTAINMENT",
+    "resonance_ceiling": 0.52,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["VOID", "MOTION", "MIND"],
+    "name": "Stillthought",
+    "effect_class": "NEGATION",
+    "resonance_ceiling": 0.46,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["VOID", "MOTION", "DECAY"],
+    "name": "The Quieting",
+    "effect_class": "ERASURE",
+    "resonance_ceiling": 0.33,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["VOID", "MOTION", "LIGHT"],
+    "name": "Dark Passage",
+    "effect_class": "NEGATION",
+    "resonance_ceiling": 0.41,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["VOID", "MIND", "DECAY"],
+    "name": "Oblivion",
+    "effect_class": "ERASURE",
+    "resonance_ceiling": 0.29,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["VOID", "MIND", "LIGHT"],
+    "name": "Occlusion",
+    "effect_class": "CORRUPTION",
+    "resonance_ceiling": 0.45,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["VOID", "DECAY", "LIGHT"],
+    "name": "Twilight Seal",
+    "effect_class": "CONTAINMENT",
+    "resonance_ceiling": 0.39,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["FORM", "MOTION", "MIND"],
+    "name": "Golemancer",
+    "effect_class": "EMERGENCE",
+    "resonance_ceiling": 0.88,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["FORM", "MOTION", "DECAY"],
+    "name": "Living Ruin",
+    "effect_class": "DISSOLUTION",
+    "resonance_ceiling": 0.71,
+    "contradiction_severity": "SOFT"
+  },
+  {
+    "aspects": ["FORM", "MOTION", "LIGHT"],
+    "name": "Radiant Frame",
+    "effect_class": "MANIFESTATION",
+    "resonance_ceiling": 0.86,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["FORM", "MIND", "DECAY"],
+    "name": "Hollow Crown",
+    "effect_class": "CORRUPTION",
+    "resonance_ceiling": 0.62,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["FORM", "MIND", "LIGHT"],
+    "name": "Apophenia",
+    "effect_class": "REVELATION",
+    "resonance_ceiling": 0.93,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["FORM", "DECAY", "LIGHT"],
+    "name": "Fossilescence",
+    "effect_class": "EMERGENCE",
+    "resonance_ceiling": 0.69,
+    "contradiction_severity": "SOFT"
+  },
+  {
+    "aspects": ["MOTION", "MIND", "DECAY"],
+    "name": "Cascade Rot",
+    "effect_class": "CORRUPTION",
+    "resonance_ceiling": 0.58,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["MOTION", "MIND", "LIGHT"],
+    "name": "Quickening",
+    "effect_class": "ACCELERATION",
+    "resonance_ceiling": 0.96,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["MOTION", "DECAY", "LIGHT"],
+    "name": "Radiant Entropy",
+    "effect_class": "DISSOLUTION",
+    "resonance_ceiling": 0.68,
+    "contradiction_severity": "SOFT"
+  },
+  {
+    "aspects": ["MIND", "DECAY", "LIGHT"],
+    "name": "Dying Star",
+    "effect_class": "EMERGENCE",
+    "resonance_ceiling": 0.74,
+    "contradiction_severity": "SOFT"
+  }
+]

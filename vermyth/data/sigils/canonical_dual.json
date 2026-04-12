@@ -1,0 +1,107 @@
+[
+  {
+    "aspects": ["VOID", "FORM"],
+    "name": "Hollow Vessel",
+    "effect_class": "CONTAINMENT",
+    "resonance_ceiling": 0.74,
+    "contradiction_severity": "SOFT"
+  },
+  {
+    "aspects": ["VOID", "MOTION"],
+    "name": "Stillwind",
+    "effect_class": "NEGATION",
+    "resonance_ceiling": 0.61,
+    "contradiction_severity": "SOFT"
+  },
+  {
+    "aspects": ["VOID", "MIND"],
+    "name": "Amnesis",
+    "effect_class": "ERASURE",
+    "resonance_ceiling": 0.55,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["VOID", "DECAY"],
+    "name": "The Unmaking",
+    "effect_class": "DISSOLUTION",
+    "resonance_ceiling": 0.42,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["VOID", "LIGHT"],
+    "name": "Occultation",
+    "effect_class": "NEGATION",
+    "resonance_ceiling": 0.38,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["FORM", "MOTION"],
+    "name": "Kineshape",
+    "effect_class": "FORCE",
+    "resonance_ceiling": 0.85,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["FORM", "MIND"],
+    "name": "Mindcarve",
+    "effect_class": "BINDING",
+    "resonance_ceiling": 0.79,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["FORM", "DECAY"],
+    "name": "Ruinform",
+    "effect_class": "DISSOLUTION",
+    "resonance_ceiling": 0.67,
+    "contradiction_severity": "SOFT"
+  },
+  {
+    "aspects": ["FORM", "LIGHT"],
+    "name": "Lucid Edifice",
+    "effect_class": "REVELATION",
+    "resonance_ceiling": 0.91,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["MOTION", "MIND"],
+    "name": "Thoughtstorm",
+    "effect_class": "COGNITION",
+    "resonance_ceiling": 0.83,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["MOTION", "DECAY"],
+    "name": "Entropy Flux",
+    "effect_class": "ACCELERATION",
+    "resonance_ceiling": 0.72,
+    "contradiction_severity": "SOFT"
+  },
+  {
+    "aspects": ["MOTION", "LIGHT"],
+    "name": "Scintillance",
+    "effect_class": "REVELATION",
+    "resonance_ceiling": 0.77,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["MIND", "DECAY"],
+    "name": "Mnemonic Rot",
+    "effect_class": "CORRUPTION",
+    "resonance_ceiling": 0.51,
+    "contradiction_severity": "HARD"
+  },
+  {
+    "aspects": ["MIND", "LIGHT"],
+    "name": "Veritas Bind",
+    "effect_class": "BINDING",
+    "resonance_ceiling": 0.94,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["DECAY", "LIGHT"],
+    "name": "Senescent Dawn",
+    "effect_class": "EMERGENCE",
+    "resonance_ceiling": 0.64,
+    "contradiction_severity": "SOFT"
+  }
+]

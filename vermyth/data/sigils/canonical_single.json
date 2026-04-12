@@ -1,0 +1,44 @@
+[
+  {
+    "aspects": ["VOID"],
+    "name": "Nullform",
+    "effect_class": "ERASURE",
+    "resonance_ceiling": 0.71,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["FORM"],
+    "name": "Solidus",
+    "effect_class": "MANIFESTATION",
+    "resonance_ceiling": 0.78,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["MOTION"],
+    "name": "Kineval",
+    "effect_class": "FORCE",
+    "resonance_ceiling": 0.75,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["MIND"],
+    "name": "Ideoglyph",
+    "effect_class": "COGNITION",
+    "resonance_ceiling": 0.82,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["DECAY"],
+    "name": "Solvite",
+    "effect_class": "DISSOLUTION",
+    "resonance_ceiling": 0.69,
+    "contradiction_severity": "NONE"
+  },
+  {
+    "aspects": ["LIGHT"],
+    "name": "Verite",
+    "effect_class": "REVELATION",
+    "resonance_ceiling": 0.88,
+    "contradiction_severity": "NONE"
+  }
+]

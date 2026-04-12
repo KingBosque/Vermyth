@@ -1,0 +1,82 @@
+{
+  "VOID+FORM": {
+    "severity": "SOFT",
+    "reason": "Void erases structure while Form generates it, producing unstable containment."
+  },
+  "VOID+MOTION": {
+    "severity": "SOFT",
+    "reason": "Void arrests change while Motion drives it, yielding partial cancellation."
+  },
+  "VOID+MIND": {
+    "severity": "HARD",
+    "reason": "Void annihilates meaning while Mind requires it, producing cognitive nullspace."
+  },
+  "VOID+DECAY": {
+    "severity": "HARD",
+    "reason": "Double negation collapses into recursive erasure with no resolution pathway."
+  },
+  "VOID+LIGHT": {
+    "severity": "HARD",
+    "reason": "Void suppresses truth while Light reveals it, producing irreconcilable opposition."
+  },
+  "FORM+DECAY": {
+    "severity": "SOFT",
+    "reason": "Structure and entropy pull against each other, producing temporary coherence only."
+  },
+  "MOTION+DECAY": {
+    "severity": "SOFT",
+    "reason": "Acceleration toward dissolution is coherent but unstable beyond short duration."
+  },
+  "DECAY+LIGHT": {
+    "severity": "SOFT",
+    "reason": "Truth emerging from ruin is coherent but carries entropic cost."
+  },
+  "VOID+FORM+DECAY": {
+    "severity": "HARD",
+    "reason": "Triple negation of structure produces no stable resolution."
+  },
+  "VOID+FORM+LIGHT": {
+    "severity": "HARD",
+    "reason": "Containment of truth by void is structurally irreconcilable."
+  },
+  "VOID+MOTION+MIND": {
+    "severity": "HARD",
+    "reason": "Arrested cognition in nullspace yields frozen but purposeless thought."
+  },
+  "VOID+MOTION+DECAY": {
+    "severity": "HARD",
+    "reason": "Universal arrest combined with dissolution leaves no substrate for effect."
+  },
+  "VOID+MOTION+LIGHT": {
+    "severity": "HARD",
+    "reason": "Unlit traversal through nullspace has no coherent destination."
+  },
+  "VOID+MIND+DECAY": {
+    "severity": "HARD",
+    "reason": "Self-erasure of memory produces irreversible cognitive dissolution."
+  },
+  "VOID+MIND+LIGHT": {
+    "severity": "HARD",
+    "reason": "Selective blindness to truth is structurally unstable under scrutiny."
+  },
+  "VOID+DECAY+LIGHT": {
+    "severity": "HARD",
+    "reason": "Entropy lock against revelation collapses under its own negation."
+  },
+  "FORM+MIND+DECAY": {
+    "severity": "HARD",
+    "reason": "Corrupted authority cannot sustain structural coherence over time."
+  },
+  "MOTION+MIND+DECAY": {
+    "severity": "HARD",
+    "reason": "Accelerated cognitive entropy has no stable terminus."
+  },
+  "VOID+FORM+MOTION": {
+    "severity": "SOFT",
+    "reason": "Null-matter animation is coherent only under tightly bounded conditions."
+  },
+  "VOID+FORM+MIND": {
+    "severity": "SOFT",
+    "reason": "Incorporeal cognition is coherent but structurally fragile."
+  }
+}
