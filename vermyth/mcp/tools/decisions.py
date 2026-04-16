@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from vermyth.engine.policy.registry import MODELS
 from vermyth.registry import AspectRegistry
-from vermyth.schema import Intent, PolicyThresholds, SemanticVector
+from vermyth.schema import Effect, Intent, PolicyThresholds, SemanticVector
 from vermyth.mcp.tools._serializers import policy_decision_to_dict
 
 if TYPE_CHECKING:
@@ -43,6 +43,11 @@ TOOLS = [
                 "parent_cast_id": {"type": "string"},
                 "causal_root_cast_id": {"type": "string"},
                 "thresholds": {"type": "object"},
+                "effects": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": "Optional world-model effects (Effect) for effect-risk scoring.",
+                },
                 "policy_model": {
                     "type": "string",
                     "enum": ["rule_based", "threshold_tuned"],
@@ -76,6 +81,7 @@ def tool_decide(
     parent_cast_id: str | None = None,
     causal_root_cast_id: str | None = None,
     thresholds: dict[str, Any] | None = None,
+    effects: list[dict[str, Any]] | None = None,
     policy_model: str | None = None,
     tuned_thresholds_path: str | None = None,
 ) -> dict[str, Any]:
@@ -98,6 +104,9 @@ def tool_decide(
     thresholds_obj = (
         PolicyThresholds.model_validate(thresholds) if thresholds is not None else None
     )
+    effect_objs: list[Effect] | None = None
+    if effects is not None:
+        effect_objs = [Effect.model_validate(e) for e in effects]
     previous_model = tools._engine._policy_model
     try:
         if policy_model is not None:
@@ -116,6 +125,7 @@ def tool_decide(
             causal_root_cast_id=causal_root_cast_id,
             thresholds=thresholds_obj,
             grimoire=tools._grimoire,
+            effects=effect_objs,
         )
     finally:
         tools._engine._policy_model = previous_model
@@ -136,6 +146,7 @@ def dispatch_decide(tools: "VermythTools", arguments: dict[str, Any]) -> dict[st
         parent_cast_id=arguments.get("parent_cast_id"),
         causal_root_cast_id=arguments.get("causal_root_cast_id"),
         thresholds=arguments.get("thresholds"),
+        effects=arguments.get("effects"),
         policy_model=arguments.get("policy_model"),
         tuned_thresholds_path=arguments.get("tuned_thresholds_path"),
     )

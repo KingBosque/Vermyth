@@ -36,8 +36,8 @@ def tune_thresholds(
         holdout_path.write_text(json.dumps(holdout), encoding="utf-8")
 
         best_payload: dict[str, Any] | None = None
-        for allow in _frange(0.55, 0.90, 0.025):
-            for reshape in _frange(0.30, 0.55, 0.025):
+        for allow in _frange(0.60, 0.90, 0.10):
+            for reshape in _frange(0.30, 0.50, 0.10):
                 if reshape >= allow:
                     continue
                 thresholds = {

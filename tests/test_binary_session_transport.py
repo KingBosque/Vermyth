@@ -1,5 +1,9 @@
 import io
 
+import pytest
+
+pytestmark = pytest.mark.experimental
+
 
 def test_binary_transport_frame_roundtrip():
     from vermyth.mcp.binary_transport import FrameType, decode_frame_from_buffer, encode_frame

@@ -5,7 +5,13 @@ from pathlib import Path
 
 from vermyth.engine.policy.base import PolicyModel
 from vermyth.engine.policy.rule_based import RuleBasedPolicyModel
-from vermyth.schema import DivergenceStatus, PolicyAction, PolicyThresholds, VerdictType
+from vermyth.schema import (
+    DivergenceStatus,
+    PolicyAction,
+    PolicyThresholds,
+    ScoreComponent,
+    VerdictType,
+)
 
 
 class ThresholdTunedPolicyModel(PolicyModel):
@@ -27,6 +33,8 @@ class ThresholdTunedPolicyModel(PolicyModel):
         adjusted_resonance: float,
         divergence_status: DivergenceStatus | None,
         narrative_coherence: float | None,
+        scores: list[ScoreComponent],
+        aggregate_score: float,
         thresholds: PolicyThresholds,
     ) -> tuple[PolicyAction, str]:
         active_thresholds = self._thresholds_override or thresholds
@@ -35,5 +43,7 @@ class ThresholdTunedPolicyModel(PolicyModel):
             adjusted_resonance=adjusted_resonance,
             divergence_status=divergence_status,
             narrative_coherence=narrative_coherence,
+            scores=scores,
+            aggregate_score=aggregate_score,
             thresholds=active_thresholds,
         )

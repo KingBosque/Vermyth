@@ -22,6 +22,11 @@ TOOLS = [{'name': 'compile_program',
   'inputSchema': {'type': 'object',
                   'properties': {'execution_id': {'type': 'string'}},
                   'required': ['execution_id']}},
+{'name': 'execution_receipt',
+  'description': 'Read execution receipt details by execution id.',
+  'inputSchema': {'type': 'object',
+                  'properties': {'execution_id': {'type': 'string'}},
+                  'required': ['execution_id']}},
  {'name': 'list_programs',
   'description': 'List stored semantic programs.',
   'inputSchema': {'type': 'object', 'properties': {'limit': {'type': 'integer'}}, 'required': []}},
@@ -71,6 +76,9 @@ def tool_execute_program(tools: "VermythTools", program_id: str) -> dict[str, An
     program = tools._grimoire.read_program(program_id)
     execution = tools._engine.execute_program(program)
     tools._grimoire.write_execution(execution)
+    receipt = getattr(tools._engine, "_last_execution_receipt", None)
+    if receipt is not None:
+        tools._grimoire.write_execution_receipt(receipt)
     return execution_to_dict(execution)
 
 
@@ -87,6 +95,11 @@ def tool_list_programs(tools: "VermythTools", limit: int = 50) -> list[dict[str,
 def tool_execution_status(tools: "VermythTools", execution_id: str) -> dict[str, Any]:
     execution = tools._grimoire.read_execution(execution_id)
     return execution_to_dict(execution)
+
+
+def tool_execution_receipt(tools: "VermythTools", execution_id: str) -> dict[str, Any]:
+    receipt = tools._grimoire.read_execution_receipt_by_execution(execution_id)
+    return receipt.model_dump(mode="json")
 
 
 def dispatch_compile_program(
@@ -119,10 +132,17 @@ def dispatch_execution_status(
     return tool_execution_status(tools, execution_id=arguments.get("execution_id", ""))
 
 
+def dispatch_execution_receipt(
+    tools: "VermythTools", arguments: dict[str, Any]
+) -> dict[str, Any]:
+    return tool_execution_receipt(tools, execution_id=arguments.get("execution_id", ""))
+
+
 DISPATCH = {
     "compile_program": dispatch_compile_program,
     "execute_program": dispatch_execute_program,
     "execution_status": dispatch_execution_status,
+    "execution_receipt": dispatch_execution_receipt,
     "list_programs": dispatch_list_programs,
     "program_status": dispatch_program_status,
 }

@@ -36,8 +36,8 @@ class GenesisRepository:
                     genesis_id, proposed_name, derived_polarity, derived_entropy,
                     proposed_symbol, centroid_vector_json, support_count,
                     mean_resonance, coherence_rate, status, proposed_at, decided_at,
-                    evidence_cast_ids_json, basis_version
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    reviewed_by, reviewed_at, review_note, evidence_cast_ids_json, basis_version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(genesis_id) DO UPDATE SET
                     proposed_name=excluded.proposed_name,
                     derived_polarity=excluded.derived_polarity,
@@ -50,6 +50,9 @@ class GenesisRepository:
                     status=excluded.status,
                     proposed_at=excluded.proposed_at,
                     decided_at=excluded.decided_at,
+                    reviewed_by=excluded.reviewed_by,
+                    reviewed_at=excluded.reviewed_at,
+                    review_note=excluded.review_note,
                     evidence_cast_ids_json=excluded.evidence_cast_ids_json,
                     basis_version=excluded.basis_version
                 """,
@@ -66,6 +69,9 @@ class GenesisRepository:
                     aspect.status.value,
                     aspect.proposed_at.isoformat(),
                     aspect.decided_at.isoformat() if aspect.decided_at else None,
+                    aspect.reviewed_by,
+                    aspect.reviewed_at.isoformat() if aspect.reviewed_at else None,
+                    aspect.review_note,
                     json.dumps(list(aspect.evidence_cast_ids)),
                     aspect.centroid_vector.normalized_basis_version(),
                 ),
@@ -85,6 +91,7 @@ class GenesisRepository:
             if row is None:
                 raise KeyError(str(genesis_id))
             decided_at = row["decided_at"]
+            reviewed_at = row["reviewed_at"] if "reviewed_at" in row.keys() else None
             basis_version = (
                 int(row["basis_version"])
                 if "basis_version" in row.keys() and row["basis_version"] is not None
@@ -105,6 +112,9 @@ class GenesisRepository:
                 status=GenesisStatus(str(row["status"])),
                 proposed_at=datetime.fromisoformat(str(row["proposed_at"])),
                 decided_at=datetime.fromisoformat(str(decided_at)) if decided_at else None,
+                reviewed_by=(str(row["reviewed_by"]) if row["reviewed_by"] else None),
+                reviewed_at=(datetime.fromisoformat(str(reviewed_at)) if reviewed_at else None),
+                review_note=(str(row["review_note"]) if row["review_note"] else None),
                 evidence_cast_ids=json.loads(row["evidence_cast_ids_json"]),
             )
         except KeyError:
@@ -139,6 +149,7 @@ class GenesisRepository:
             out: list[EmergentAspect] = []
             for row in cur.fetchall():
                 decided_at = row["decided_at"]
+                reviewed_at = row["reviewed_at"] if "reviewed_at" in row.keys() else None
                 basis_version = (
                     int(row["basis_version"])
                     if "basis_version" in row.keys() and row["basis_version"] is not None
@@ -162,6 +173,15 @@ class GenesisRepository:
                         decided_at=(
                             datetime.fromisoformat(str(decided_at)) if decided_at else None
                         ),
+                        reviewed_by=(
+                            str(row["reviewed_by"]) if row["reviewed_by"] else None
+                        ),
+                        reviewed_at=(
+                            datetime.fromisoformat(str(reviewed_at)) if reviewed_at else None
+                        ),
+                        review_note=(
+                            str(row["review_note"]) if row["review_note"] else None
+                        ),
                         evidence_cast_ids=json.loads(row["evidence_cast_ids_json"]),
                     )
                 )
@@ -171,6 +191,8 @@ class GenesisRepository:
 
     def accept_emergent_aspect(self, genesis_id: str) -> EmergentAspect:
         aspect = self.read_emergent_aspect(genesis_id)
+        if aspect.reviewed_at is None:
+            raise RuntimeError("genesis proposal must be reviewed before acceptance")
         accepted = EmergentAspect.model_construct(
             genesis_id=aspect.genesis_id,
             proposed_name=aspect.proposed_name,
@@ -184,6 +206,9 @@ class GenesisRepository:
             status=GenesisStatus.ACCEPTED,
             proposed_at=aspect.proposed_at,
             decided_at=datetime.now(timezone.utc),
+            reviewed_by=aspect.reviewed_by,
+            reviewed_at=aspect.reviewed_at,
+            review_note=aspect.review_note,
             evidence_cast_ids=aspect.evidence_cast_ids,
         )
         registry = AspectRegistry.get()
@@ -214,9 +239,35 @@ class GenesisRepository:
             status=GenesisStatus.REJECTED,
             proposed_at=aspect.proposed_at,
             decided_at=datetime.now(timezone.utc),
+            reviewed_by=aspect.reviewed_by,
+            reviewed_at=aspect.reviewed_at,
+            review_note=aspect.review_note,
             evidence_cast_ids=aspect.evidence_cast_ids,
         )
         self.write_emergent_aspect(rejected)
         return rejected
+
+    def review_emergent_aspect(self, genesis_id: str, reviewer: str, note: str | None) -> EmergentAspect:
+        aspect = self.read_emergent_aspect(genesis_id)
+        reviewed = EmergentAspect.model_construct(
+            genesis_id=aspect.genesis_id,
+            proposed_name=aspect.proposed_name,
+            derived_polarity=aspect.derived_polarity,
+            derived_entropy=aspect.derived_entropy,
+            proposed_symbol=aspect.proposed_symbol,
+            centroid_vector=aspect.centroid_vector,
+            support_count=aspect.support_count,
+            mean_resonance=aspect.mean_resonance,
+            coherence_rate=aspect.coherence_rate,
+            status=aspect.status,
+            proposed_at=aspect.proposed_at,
+            decided_at=aspect.decided_at,
+            reviewed_by=str(reviewer),
+            reviewed_at=datetime.now(timezone.utc),
+            review_note=note,
+            evidence_cast_ids=aspect.evidence_cast_ids,
+        )
+        self.write_emergent_aspect(reviewed)
+        return reviewed
 """Emergent genesis repository split placeholder."""
 

@@ -1,3 +1,8 @@
+import pytest
+
+pytestmark = pytest.mark.experimental
+
+
 def test_session_codec_packet_roundtrip_signed(tmp_path):
     from pathlib import Path
 

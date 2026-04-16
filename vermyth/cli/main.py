@@ -197,18 +197,22 @@ class VermythCLI(CLIContract):
         return program_command.cmd_list_programs(self, int(limit))
     def cmd_execution_status(self, execution_id: str) -> None:
         return program_command.cmd_execution_status(self, execution_id)
+    def cmd_execution_receipt(self, execution_id: str) -> None:
+        return program_command.cmd_execution_receipt(self, execution_id)
     def cmd_propose_genesis(
         self,
         *,
         history_limit: int = 500,
         min_cluster_size: int = 15,
         min_unexplained_variance: float = 0.3,
+        min_coherence_rate: float = 0.6,
     ) -> None:
         return genesis_command.cmd_propose_genesis(
             self,
             history_limit=history_limit,
             min_cluster_size=min_cluster_size,
             min_unexplained_variance=min_unexplained_variance,
+            min_coherence_rate=min_coherence_rate,
         )
     def cmd_genesis_proposals(self, *, status: str | None = None, limit: int = 50) -> None:
         return genesis_command.cmd_genesis_proposals(self, status=status, limit=limit)
@@ -216,6 +220,13 @@ class VermythCLI(CLIContract):
         return genesis_command.cmd_accept_genesis(self, genesis_id)
     def cmd_reject_genesis(self, genesis_id: str) -> None:
         return genesis_command.cmd_reject_genesis(self, genesis_id)
+    def cmd_review_genesis(self, genesis_id: str, reviewer: str, note: str | None = None) -> None:
+        return genesis_command.cmd_review_genesis(
+            self,
+            genesis_id=genesis_id,
+            reviewer=reviewer,
+            note=note,
+        )
     def cmd_infer_cause(self, source_cast_id: str, target_cast_id: str) -> None:
         return causal_command.cmd_infer_cause(self, source_cast_id, target_cast_id)
     def cmd_add_cause(self, payload: dict[str, object]) -> None:

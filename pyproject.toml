@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vermyth"
 version = "0.1.0"
-description = "A semantic execution language for AI systems."
+description = "A semantic IR and decision runtime for AI agents."
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.0",
@@ -23,6 +23,11 @@ llm = [
 embed = [
     "sentence-transformers",
 ]
+# Stub extra: OSWorld/WebArena drivers are not bundled; use for documented optional deps later.
+bench-osworld = []
+a2a-crypto = [
+    "cryptography>=42",
+]
 
 [project.scripts]
 vermyth = "vermyth.cli.main:main"
@@ -30,6 +35,10 @@ vermyth-mcp = "vermyth.mcp.server:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "-m \"not experimental\""
+markers = [
+    "experimental: tests for experimental surfaces",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

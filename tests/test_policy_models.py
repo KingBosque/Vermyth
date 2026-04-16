@@ -27,12 +27,16 @@ def test_rule_based_and_threshold_tuned_parity_with_default_thresholds() -> None
             adjusted_resonance=adjusted,
             divergence_status=divergence,
             narrative_coherence=narrative,
+            scores=[],
+            aggregate_score=adjusted,
             thresholds=thresholds,
         )[0] == tuned.decide(
             verdict=verdict,
             adjusted_resonance=adjusted,
             divergence_status=divergence,
             narrative_coherence=narrative,
+            scores=[],
+            aggregate_score=adjusted,
             thresholds=thresholds,
         )[0]
 
@@ -62,6 +66,8 @@ def test_threshold_tuned_can_change_actions() -> None:
         adjusted_resonance=adjusted,
         divergence_status=DivergenceStatus.STABLE,
         narrative_coherence=None,
+        scores=[],
+        aggregate_score=adjusted,
         thresholds=thresholds,
     )
     tuned_action, _ = tuned.decide(
@@ -69,6 +75,8 @@ def test_threshold_tuned_can_change_actions() -> None:
         adjusted_resonance=adjusted,
         divergence_status=DivergenceStatus.STABLE,
         narrative_coherence=None,
+        scores=[],
+        aggregate_score=adjusted,
         thresholds=thresholds,
     )
     assert rule_action != tuned_action

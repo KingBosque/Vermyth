@@ -1,0 +1,25 @@
+[
+  {
+    "id": "osw-001",
+    "aspects": ["MIND", "LIGHT"],
+    "intent": {
+      "objective": "Extract account table values",
+      "scope": "browser-session",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "ALLOW"
+  },
+  {
+    "id": "osw-002",
+    "aspects": ["VOID", "DECAY"],
+    "intent": {
+      "objective": "Delete user profile data",
+      "scope": "production",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "DENY"
+  }
+]
+

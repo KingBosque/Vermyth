@@ -115,7 +115,7 @@ def test_handle_tools_list_tools():
     s._out.seek(0)
     out = json.loads(s._out.read())
     tools = out["result"]["tools"]
-    assert len(tools) == 42
+    assert len(tools) == len(TOOL_DEFINITIONS)
     names = [t["name"] for t in tools]
     assert names == [
         "decide",
@@ -142,18 +142,16 @@ def test_handle_tools_list_tools():
         "lineage_drift",
         "set_divergence_thresholds",
         "sync_channel",
-        "gossip_sync",
-        "swarm_cast",
-        "swarm_join",
-        "swarm_status",
         "compile_program",
         "execute_program",
         "execution_status",
+        "execution_receipt",
         "list_programs",
         "program_status",
         "accept_genesis",
         "genesis_proposals",
         "propose_genesis",
+        "review_genesis",
         "reject_genesis",
         "add_causal_edge",
         "causal_subgraph",
@@ -164,7 +162,37 @@ def test_handle_tools_list_tools():
 
 
 def test_tool_definitions_match_module_constant():
-    assert len(TOOL_DEFINITIONS) == 42
+    assert len(TOOL_DEFINITIONS) > 0
+
+
+def test_handle_resources_list():
+    s = _fresh_server()
+    s._handle_resources_list({"jsonrpc": "2.0", "id": 8, "method": "resources/list"})
+    s._out.seek(0)
+    out = json.loads(s._out.read())
+    names = [r["name"] for r in out["result"]["resources"]]
+    assert names == [
+        "cast",
+        "program_execution",
+        "execution_receipt",
+        "program",
+        "programs",
+    ]
+
+
+def test_handle_resources_read_not_implemented_without_tools():
+    s = _fresh_server()
+    s._handle_resources_read(
+        {
+            "jsonrpc": "2.0",
+            "id": 9,
+            "method": "resources/read",
+            "params": {"uri": "vermyth://cast/abc"},
+        }
+    )
+    s._out.seek(0)
+    out = json.loads(s._out.read())
+    assert out["error"]["code"] == ERROR_NOT_IMPLEMENTED
 
 
 def test_handle_tools_call_not_implemented():

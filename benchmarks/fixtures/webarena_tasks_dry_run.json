@@ -1,0 +1,25 @@
+[
+  {
+    "id": "wa-001",
+    "aspects": ["MIND", "FORM"],
+    "intent": {
+      "objective": "Search product catalog and open detail page",
+      "scope": "web-task",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "ALLOW"
+  },
+  {
+    "id": "wa-002",
+    "aspects": ["DECAY", "VOID"],
+    "intent": {
+      "objective": "Permanently archive customer account",
+      "scope": "admin",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "DENY"
+  }
+]
+

@@ -56,6 +56,15 @@ def cmd_execution_status(cli: "VermythCLI", execution_id: str) -> None:
         sys.exit(1)
 
 
+def cmd_execution_receipt(cli: "VermythCLI", execution_id: str) -> None:
+    try:
+        out = cli._tools.tool_execution_receipt(execution_id)
+        print(out)
+    except KeyError:
+        print(f"Execution receipt not found: {execution_id}", file=sys.stderr)
+        sys.exit(1)
+
+
 def register_subparsers(subs: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     cp = subs.add_parser("compile-program", help="Compile a semantic program JSON.")
     cp.add_argument("path", metavar="PATH")
@@ -71,6 +80,9 @@ def register_subparsers(subs: argparse._SubParsersAction[argparse.ArgumentParser
 
     es = subs.add_parser("execution-status", help="Show program execution status.")
     es.add_argument("execution_id", metavar="EXECUTION_ID")
+
+    er = subs.add_parser("execution-receipt", help="Show execution receipt details.")
+    er.add_argument("execution_id", metavar="EXECUTION_ID")
 
 
 def _dispatch_compile_program(cli: "VermythCLI", ns: argparse.Namespace) -> None:
@@ -93,10 +105,15 @@ def _dispatch_execution_status(cli: "VermythCLI", ns: argparse.Namespace) -> Non
     cli.cmd_execution_status(execution_id=ns.execution_id)
 
 
+def _dispatch_execution_receipt(cli: "VermythCLI", ns: argparse.Namespace) -> None:
+    cli.cmd_execution_receipt(execution_id=ns.execution_id)
+
+
 DISPATCH = {
     "compile-program": _dispatch_compile_program,
     "execute-program": _dispatch_execute_program,
     "program-status": _dispatch_program_status,
     "list-programs": _dispatch_list_programs,
     "execution-status": _dispatch_execution_status,
+    "execution-receipt": _dispatch_execution_receipt,
 }

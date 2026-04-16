@@ -1,5 +1,7 @@
 import pytest
 
+pytestmark = pytest.mark.experimental
+
 
 def test_encode_decode_roundtrip():
     from vermyth.mcp.geometric import decode_packet, encode_packet, validate_proof

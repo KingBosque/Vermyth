@@ -20,6 +20,7 @@ from vermyth.grimoire.repositories.decisions import DecisionRepository
 from vermyth.grimoire.repositories.divergence import DivergenceRepository
 from vermyth.grimoire.repositories.genesis import GenesisRepository
 from vermyth.grimoire.repositories.programs import ProgramRepository
+from vermyth.grimoire.repositories.receipts import ReceiptRepository
 from vermyth.grimoire.repositories.registry import RegistryRepository
 from vermyth.grimoire.repositories.seeds import SeedRepository
 from vermyth.grimoire.repositories.sessions import SessionRepository
@@ -47,6 +48,7 @@ from vermyth.schema import (
     DivergenceThresholds_DEFAULT,
     EmergentAspect,
     EffectClass,
+    ExecutionReceipt,
     GenesisStatus,
     GossipPayload,
     GlyphSeed,
@@ -100,6 +102,7 @@ class Grimoire(GrimoireContract):
         self.causal = CausalRepository(self._conn)
         self.swarm = SwarmRepository(self._conn)
         self.programs = ProgramRepository(self._conn)
+        self.receipts = ReceiptRepository(self._conn)
         self.decisions = DecisionRepository(self._conn)
         self._run_migrations()
     def _run_migrations(self) -> None:
@@ -130,6 +133,9 @@ class Grimoire(GrimoireContract):
             ("v014", "v014_policy_decisions.sql"),
             ("v015", "v015_cast_provenance_extend.sql"),
             ("v016", "v016_policy_decision_model.sql"),
+            ("v017", "v017_program_effects.sql"),
+            ("v018", "v018_execution_receipts.sql"),
+            ("v019", "v019_genesis_review.sql"),
         ]
         for version, filename in migrations:
             if version in applied:
@@ -303,6 +309,12 @@ class Grimoire(GrimoireContract):
         return self.programs.read_execution(execution_id)
     def query_executions(self, program_id: str, limit: int = 50) -> list[ProgramExecution]:
         return self.programs.query_executions(program_id=program_id, limit=limit)
+    def write_execution_receipt(self, receipt: ExecutionReceipt) -> None:
+        self.receipts.write_execution_receipt(receipt)
+    def read_execution_receipt(self, receipt_id: str) -> ExecutionReceipt:
+        return self.receipts.read_execution_receipt(receipt_id)
+    def read_execution_receipt_by_execution(self, execution_id: str) -> ExecutionReceipt:
+        return self.receipts.read_execution_receipt_by_execution(execution_id)
     def write_emergent_aspect(self, aspect: EmergentAspect) -> None:
         self.genesis.write_emergent_aspect(aspect)
     def read_emergent_aspect(self, genesis_id: str) -> EmergentAspect:
@@ -315,6 +327,8 @@ class Grimoire(GrimoireContract):
         return self.genesis.accept_emergent_aspect(genesis_id)
     def reject_emergent_aspect(self, genesis_id: str) -> EmergentAspect:
         return self.genesis.reject_emergent_aspect(genesis_id)
+    def review_emergent_aspect(self, genesis_id: str, reviewer: str, note: str | None) -> EmergentAspect:
+        return self.genesis.review_emergent_aspect(genesis_id, reviewer, note)
     def write_causal_edge(self, edge: CausalEdge) -> None:
         self.causal.write_causal_edge(edge)
     def read_causal_edge(self, edge_id: str) -> CausalEdge:

@@ -6,6 +6,7 @@ import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
+from vermyth.adapters.a2a import TaskGateway, build_agent_card
 from vermyth.bootstrap import build_tools
 from vermyth.mcp.server import TOOL_DISPATCH
 from vermyth.mcp.tool_definitions import TOOL_DEFINITIONS
@@ -48,6 +49,10 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         if not self._authorized():
             return
+        if self.path == "/.well-known/agent.json":
+            card = build_agent_card(TOOL_DEFINITIONS)
+            _json_response(self, 200, card.model_dump(mode="json"))
+            return
         if self.path == "/tools":
             _json_response(self, 200, {"tools": TOOL_DEFINITIONS})
             return
@@ -84,6 +89,18 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         if not self._authorized():
             return
+        if self.path == "/a2a/tasks":
+            size = int(self.headers.get("Content-Length", "0") or 0)
+            raw = self.rfile.read(size) if size > 0 else b"{}"
+            try:
+                payload = json.loads(raw.decode("utf-8"))
+                gateway = TaskGateway(tools=self.tools, tool_dispatch=TOOL_DISPATCH)
+                result = gateway.execute_task(payload)
+            except Exception as exc:
+                _json_response(self, 400, {"error": str(exc)})
+                return
+            _json_response(self, 200, result)
+            return
         if not self.path.startswith("/tools/"):
             _json_response(self, 404, {"error": "not_found"})
             return
@@ -100,6 +117,7 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
                 payload = {}
             if not isinstance(payload, dict):
                 raise ValueError("JSON body must be an object")
+            self.tools.enforce_tool_scope(tool_name)
             result = handler(self.tools, payload)
         except Exception as exc:
             _json_response(self, 400, {"error": str(exc)})

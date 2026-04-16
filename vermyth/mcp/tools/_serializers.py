@@ -24,6 +24,8 @@ def policy_decision_to_dict(decision: PolicyDecision) -> dict[str, Any]:
         ),
         "narrative_coherence": decision.narrative_coherence,
         "thresholds": decision.thresholds.model_dump(mode="json"),
+        "scores": [s.model_dump(mode="json") for s in decision.scores],
+        "explanation": decision.explanation,
         "model_name": decision.model_name,
         "model_version": decision.model_version,
         "timestamp": decision.timestamp.isoformat(),

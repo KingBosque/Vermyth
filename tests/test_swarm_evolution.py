@@ -3,6 +3,10 @@
 import json
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.experimental
+
 
 def test_auto_cast_returns_chain(resonance_engine):
     from vermyth.schema import Intent, ReversibilityClass, SemanticVector, SideEffectTolerance

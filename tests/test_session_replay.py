@@ -1,3 +1,8 @@
+import pytest
+
+pytestmark = pytest.mark.experimental
+
+
 def test_session_checkpoint_rewind_fork(make_tools):
     sid = make_tools.session_open(
         transport="JSONRPC",

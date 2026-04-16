@@ -1,0 +1,37 @@
+[
+  {
+    "id": "v1-allow-001",
+    "aspects": ["MIND", "LIGHT"],
+    "intent": {
+      "objective": "Analyze local dataset",
+      "scope": "workspace",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "ALLOW"
+  },
+  {
+    "id": "v1-reshape-001",
+    "aspects": ["FORM", "MOTION"],
+    "intent": {
+      "objective": "Reshape the intermediate artifact",
+      "scope": "pipeline",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "RESHAPE"
+  },
+  {
+    "id": "v1-deny-001",
+    "aspects": ["VOID", "DECAY"],
+    "intent": {
+      "objective": "Permanently delete production records",
+      "scope": "production",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "DENY",
+    "notes": "Intended to exercise high-risk policy paths."
+  }
+]
+

@@ -228,6 +228,7 @@ class EvaluationContract(ABC):
         causal_root_cast_id: str | None = None,
         thresholds: PolicyThresholds | None = None,
         grimoire: "GrimoireContract | None" = None,
+        effects: "list | None" = None,
     ) -> tuple[PolicyDecision, CastResult]:
         """Evaluate and return a policy action plus the supporting cast."""
         ...

@@ -1,6 +1,7 @@
-"""MCP stdio server skeleton (JSON-RPC 2.0, newline-delimited).
+"""MCP stdio server (JSON-RPC 2.0, newline-delimited).
 
-Also supports an optional binary-first session transport when enabled.
+MCP is used for tool/resource access. Experimental peer-agent coordination
+surfaces are available only when explicitly enabled.
 """
 
 from __future__ import annotations
@@ -47,6 +48,10 @@ from vermyth.mcp.tools import swarm as swarm_tools
 from vermyth.mcp.tools import VermythTools
 from vermyth.mcp.tool_definitions import TOOL_DEFINITIONS
 
+_ENABLE_EXPERIMENTAL = bool(
+    int((os.environ.get("VERMYTH_EXPERIMENTAL_TOOLS", "0") or "0"))
+)
+
 TOOL_DISPATCH = {
     **casting_tools.DISPATCH,
     **decision_tools.DISPATCH,
@@ -58,8 +63,10 @@ TOOL_DISPATCH = {
     **query_tools.DISPATCH,
     **registry_tools.DISPATCH,
     **seed_tools.DISPATCH,
-    **swarm_tools.DISPATCH,
 }
+
+if _ENABLE_EXPERIMENTAL:
+    TOOL_DISPATCH.update(swarm_tools.DISPATCH)
 
 
 class VermythMCPServer:
@@ -171,6 +178,11 @@ class VermythMCPServer:
                 continue
 
             if frame.frame_type in (FrameType.GOSSIP_PUSH, FrameType.GOSSIP_PULL):
+                if not _ENABLE_EXPERIMENTAL:
+                    err = {"error": "experimental tool surface disabled"}
+                    self._bin_out.write(encode_frame(FrameType.ERROR, json.dumps(err).encode("utf-8")))
+                    self._bin_out.flush()
+                    continue
                 if self._tools is None:
                     err = {"error": "No engine or grimoire configured."}
                     self._bin_out.write(encode_frame(FrameType.ERROR, json.dumps(err).encode("utf-8")))
@@ -222,7 +234,12 @@ class VermythMCPServer:
                 tool = payload_obj.get("tool")
                 args = payload_obj.get("arguments", {})
                 try:
-                    binary_handler = session_tools.BINARY_DISPATCH.get(str(tool))
+                    binary_handler = (
+                        session_tools.BINARY_DISPATCH.get(str(tool))
+                        if _ENABLE_EXPERIMENTAL
+                        else None
+                    )
+                    self._tools.enforce_tool_scope(str(tool))
                     if binary_handler is not None:
                         result = binary_handler(self._tools, args)
                     elif str(tool) in TOOL_DISPATCH:
@@ -247,6 +264,95 @@ class VermythMCPServer:
 
     def _handle_tools_list(self, message: dict) -> None:
         self._send(make_success(get_id(message), {"tools": TOOL_DEFINITIONS}))
+
+    def _handle_resources_list(self, message: dict) -> None:
+        resources = [
+            {
+                "name": "cast",
+                "uriTemplate": "vermyth://cast/{cast_id}",
+                "description": "Read cast record by cast id.",
+            },
+            {
+                "name": "program_execution",
+                "uriTemplate": "vermyth://program_execution/{execution_id}",
+                "description": "Read program execution by execution id.",
+            },
+            {
+                "name": "execution_receipt",
+                "uriTemplate": "vermyth://execution_receipt/{execution_id}",
+                "description": "Read execution receipt by execution id.",
+            },
+            {
+                "name": "program",
+                "uriTemplate": "vermyth://program/{program_id}",
+                "description": "Read a stored semantic program by program id.",
+            },
+            {
+                "name": "programs",
+                "uri": "vermyth://programs",
+                "description": "List stored semantic programs (optional query ?limit=N, default 50).",
+            },
+        ]
+        self._send(make_success(get_id(message), {"resources": resources}))
+
+    def _handle_resources_read(self, message: dict) -> None:
+        params = get_params(message)
+        uri = str(params.get("uri", ""))
+        if self._tools is None:
+            self._send(
+                make_error(
+                    get_id(message),
+                    ERROR_NOT_IMPLEMENTED,
+                    "No engine or grimoire configured.",
+                )
+            )
+            return
+        try:
+            if uri.startswith("vermyth://cast/"):
+                cast_id = uri.split("/", 3)[-1]
+                payload = self._tools.tool_inspect(cast_id)
+            elif uri.startswith("vermyth://program_execution/"):
+                execution_id = uri.split("/", 3)[-1]
+                payload = self._tools.tool_execution_status(execution_id)
+            elif uri.startswith("vermyth://execution_receipt/"):
+                execution_id = uri.split("/", 3)[-1]
+                payload = self._tools.tool_execution_receipt(execution_id)
+            elif uri.startswith("vermyth://programs"):
+                limit = 50
+                if "?" in uri:
+                    _, q = uri.split("?", 1)
+                    for part in q.split("&"):
+                        if part.startswith("limit="):
+                            try:
+                                limit = max(1, int(part.split("=", 1)[1]))
+                            except ValueError as exc:
+                                raise ValueError("invalid limit in programs uri") from exc
+                payload = self._tools.tool_list_programs(limit=limit)
+            elif uri.startswith("vermyth://program/"):
+                program_id = uri[len("vermyth://program/") :].split("?")[0]
+                if not program_id:
+                    self._send(
+                        make_error(
+                            get_id(message),
+                            ERROR_INVALID_PARAMS,
+                            "program_id required in vermyth://program/{program_id}",
+                        )
+                    )
+                    return
+                payload = self._tools.tool_program_status(program_id)
+            else:
+                self._send(
+                    make_error(
+                        get_id(message),
+                        ERROR_INVALID_PARAMS,
+                        f"unknown resource uri: {uri}",
+                    )
+                )
+                return
+        except Exception as exc:
+            self._send(make_error(get_id(message), ERROR_INVALID_PARAMS, str(exc)))
+            return
+        self._send(make_success(get_id(message), {"contents": [{"uri": uri, "json": payload}]}))
 
     def _handle_tools_call(self, message: dict) -> None:
         msg_id = get_id(message)
@@ -276,6 +382,7 @@ class VermythMCPServer:
                     )
                 )
                 return
+            self._tools.enforce_tool_scope(str(tool_name))
             result = handler(self._tools, arguments)
             self._send(make_success(msg_id, result))
 
@@ -317,6 +424,10 @@ class VermythMCPServer:
                 self._handle_tools_list(message)
             elif method == "tools/call":
                 self._handle_tools_call(message)
+            elif method == "resources/list":
+                self._handle_resources_list(message)
+            elif method == "resources/read":
+                self._handle_resources_read(message)
             else:
                 self._send(
                     make_error(

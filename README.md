@@ -1,8 +1,16 @@
 # Vermyth
 
-**Vermyth** is a Python library and command-line tool that behaves as a small **semantic execution language** for agent decision-gating workflows. You describe a situation as a combination of symbolic **aspects**, declare an **intent** (objective, scope, reversibility, tolerance), and the system **composes** a resolved **sigil**, **evaluates** how well the intent aligns with that sigil’s geometry, and records the outcome. Persistence (the **grimoire**) and remote control (**MCP**) sit on top of the same core types and contracts.
+**Vermyth** is a Python library and command-line tool for a machine-native **semantic IR and decision runtime**. You describe situations as symbolic **aspects**, declare an **intent** (objective, scope, reversibility, tolerance), and the system composes a resolved **sigil**, evaluates alignment, and emits explicit decision artifacts. Persistence (the **grimoire**) and remote control (**MCP**) are layered on top of the same core contracts.
 
-This repository implements the full stack: **typed models**, **composition and resonance engines**, **SQLite storage**, an **MCP stdio server** (JSON-RPC 2.0, no third-party MCP SDK), and a **human-oriented CLI**.
+This repository implements the full stack: **typed models**, **composition and scoring engines**, **SQLite storage**, an **MCP stdio server** (JSON-RPC 2.0, no third-party MCP SDK), and a **human-oriented CLI**.
+
+Vermyth intentionally separates concerns:
+
+- Internal semantic IR + runtime semantics.
+- MCP for tool/resource access.
+- Experimental peer-coordination transport that is **not** the public interoperability contract.
+
+See `docs/STABILITY.md` and `docs/adr/0001-vermyth-as-semantic-ir.md` for stability tiers and architecture posture.
 
 ---
 
@@ -17,8 +25,8 @@ This repository implements the full stack: **typed models**, **composition and r
 | **`Grimoire`** | SQLite persistence: casts, seeds, structured `query`, in-Python **semantic search** (cosine similarity over stored vectors), migrations (`v001`). |
 | **`VermythTools`** | Shared tool implementation used by MCP and CLI: cast, query, semantic search, inspect, seeds (serialization to plain dicts). |
 | **`VermythMCPServer`** | Stdio MCP: `initialize`, `tools/list`, `tools/call` with JSON-RPC error codes for validation and internal errors. |
-| **Session Codec V2** | Optional binary-first transport + session codec (`vermyth.protocol.session_codec`) that adds negotiated capabilities, replay-guarded sequence numbers, and identity-oriented packet proofs while keeping JSON-RPC V1 compatible. |
-| **Swarm evolution** | `ResonanceEngine.auto_cast` (self-healing fluid refinement), `swarm_cast` (weighted multi-peer aggregation + `SwarmState` in grimoire `v009`), and `GossipPayload` federation sync (`VERMYTH_FEDERATION_SECRET`) merged via `apply_gossip_sync`. |
+| **Session Codec V2 (experimental)** | Optional binary-first transport + session codec (`vermyth.protocol.session_codec`) for research. This is not part of Vermyth's stable public contract. |
+| **Swarm evolution (experimental)** | `ResonanceEngine.auto_cast` (self-healing fluid refinement), `swarm_cast` aggregation, and `GossipPayload` sync are available as research modules and are not interoperability commitments. |
 | **Triple evolutionary leap** | Semantic program compilation/execution (`SemanticProgram`), emergent aspect genesis (`EmergentAspect` + acceptance flow), and causal semantic graph tooling (`CausalEdge`, `CausalSubgraph`, predictive casting). |
 | **`VermythCLI`** | `argparse` subcommands: `cast`, `query`, `search`, `inspect`, `seeds` — formatted tables and detail views on stdout; errors on stderr, exit code 1. |
 
@@ -52,20 +60,21 @@ Console entry points after install:
 - **HTTP**: `python -m vermyth.adapters.http` for lightweight tool-style HTTP calls.
   See [`docs/http_adapter.md`](docs/http_adapter.md) for endpoint details.
 
-### V1 compatibility vs V2 sessions
+### V1 compatibility vs V2 sessions (experimental track)
 
 - **V1 (default)**: MCP is **newline-delimited JSON-RPC 2.0** (`initialize`, `tools/list`, `tools/call`). The V1 “geometric” packet helpers (`vermyth.mcp.geometric`) remain **lossy** by design.
-- **V2 (optional)**: A session layer with **canonical packets** and **replay protection**:
+- **V2 (optional, experimental)**: A session layer with **canonical packets** and **replay protection**:
   - `SessionRecord`, `CanonicalPacketV2`, `CanonicalResponseV2` in `vermyth.schema`
   - Persistence in the grimoire (`v008_sessions.sql`)
   - Codec helpers in `vermyth.protocol.session_codec`
   - Optional **binary framing** in the MCP server when `VERMYTH_BINARY_TRANSPORT=1`
 
-### Swarm and federation
+### Swarm and federation (experimental track)
 
 - **`auto_cast`** (`vermyth` CLI / MCP `auto_cast`): iteratively blends the semantic vector toward the fluid sigil until the verdict reaches `target_resonance` or `max_depth`.
 - **Swarms** (`swarm_join`, `swarm_cast`, `swarm_status`): peers share a `swarm_id`; vectors are aggregated with weights `1 + 0.01 * min(100, coherence_streak)`.
 - **Gossip** (`gossip_sync` / binary frames `GOSSIP_PUSH` / `GOSSIP_PULL`): JSON payload signed with `sign_gossip_payload`; set **`VERMYTH_FEDERATION_SECRET`** for verification.
+- These features are experimental and not the wire-level standard Vermyth recommends for production interoperability.
 
 ### Semantic programs
 
@@ -180,7 +189,11 @@ Runs a **newline-delimited JSON-RPC 2.0** server on stdio (protocol subset: `ini
 
 With default configuration, **`main()`** builds a **`CompositionEngine`**, **`Grimoire()`** (default database under `~/.vermyth/grimoire.db`), and **`ResonanceEngine`** with env-driven backend selection (defaults to partial projection).
 
-Tool names exposed to clients include casting/query primitives plus advanced families for sessions, swarms, programs, genesis, and causal graphs. See `TOOL_DEFINITIONS` in `vermyth/mcp/tool_definitions.py` for the authoritative list.
+Tool names exposed to clients focus on decision/casting/query/program/grimoire workflows. Experimental session/sync families are not part of the stable MCP contract. See `TOOL_DEFINITIONS` in `vermyth/mcp/tool_definitions.py` for the authoritative list.
+
+### Experimental tools (gated)
+
+Set **`VERMYTH_EXPERIMENTAL_TOOLS=1`** to include additional tools in MCP `tools/list`, HTTP `GET /tools`, and `GET /.well-known/agent.json`. Today this adds the **swarm** family (`swarm_join`, `swarm_cast`, `swarm_status`, `auto_cast`, `gossip_sync`, and related definitions in `vermyth/mcp/tools/swarm.py`). Leave unset for the default stable tool surface. See `docs/STABILITY.md`.
 
 ---
 
@@ -284,6 +297,11 @@ pytest tests/
 ```
 
 Tests cover schema validation, contracts, composition, resonance, grimoire, MCP protocol and tools, and CLI behavior.
+
+## Benchmarks
+
+- `benchmarks/corpus_v0_synthetic.json` is a regression fixture, not a frontier performance claim.
+- External dry-run adapters live under `benchmarks/adapters/` (`osworld.py`, `webarena.py`) and are intended as a bridge toward realistic task evaluation.
 
 ---
 

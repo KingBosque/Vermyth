@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from vermyth.schema import DivergenceStatus, PolicyAction, PolicyThresholds, VerdictType
+from vermyth.schema import (
+    DivergenceStatus,
+    PolicyAction,
+    PolicyThresholds,
+    ScoreComponent,
+    VerdictType,
+)
 
 
 class PolicyModel(Protocol):
@@ -16,5 +22,7 @@ class PolicyModel(Protocol):
         adjusted_resonance: float,
         divergence_status: DivergenceStatus | None,
         narrative_coherence: float | None,
+        scores: list[ScoreComponent],
+        aggregate_score: float,
         thresholds: PolicyThresholds,
     ) -> tuple[PolicyAction, str]: ...

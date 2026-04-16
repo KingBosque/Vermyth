@@ -9,6 +9,7 @@ from vermyth.grimoire.repositories.crystallized import CrystallizedRepository
 from vermyth.grimoire.repositories.divergence import DivergenceRepository
 from vermyth.grimoire.repositories.genesis import GenesisRepository
 from vermyth.grimoire.repositories.programs import ProgramRepository
+from vermyth.grimoire.repositories.receipts import ReceiptRepository
 from vermyth.grimoire.repositories.registry import RegistryRepository
 from vermyth.grimoire.repositories.seeds import SeedRepository
 from vermyth.grimoire.repositories.sessions import SessionRepository
@@ -24,6 +25,7 @@ __all__ = [
     "DivergenceRepository",
     "GenesisRepository",
     "ProgramRepository",
+    "ReceiptRepository",
     "RegistryRepository",
     "SeedRepository",
     "SessionRepository",

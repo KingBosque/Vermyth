@@ -35,6 +35,7 @@ from vermyth.schema import (
     DivergenceReport,
     DivergenceStatus,
     EmergentAspect,
+    Effect,
     EffectClass,
     FluidSigil,
     GlyphSeed,
@@ -217,12 +218,14 @@ class ResonanceEngine(EvaluationContract):
         *,
         min_cluster_size: int = 15,
         min_unexplained_variance: float = 0.3,
+        min_coherence_rate: float = 0.6,
     ) -> list[EmergentAspect]:
         return genesis_ops.propose_genesis(
             self,
             cast_history,
             min_cluster_size=min_cluster_size,
             min_unexplained_variance=min_unexplained_variance,
+            min_coherence_rate=min_coherence_rate,
         )
 
     def infer_causal_edge(
@@ -246,6 +249,7 @@ class ResonanceEngine(EvaluationContract):
         causal_root_cast_id: str | None = None,
         thresholds: PolicyThresholds | None = None,
         grimoire: GrimoireContract | None = None,
+        effects: list[Effect] | None = None,
     ) -> tuple[PolicyDecision, CastResult]:
         return decision_ops.decide(
             self,
@@ -256,6 +260,7 @@ class ResonanceEngine(EvaluationContract):
             causal_root_cast_id=causal_root_cast_id,
             thresholds=thresholds,
             grimoire=grimoire,
+            effects=effects,
         )
 
     def swarm_cast(

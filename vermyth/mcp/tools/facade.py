@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -71,6 +72,12 @@ from vermyth.mcp.tools import session as session_tools
 from vermyth.mcp.tools import swarm as swarm_tools
 from vermyth.mcp.tools._serializers import policy_decision_to_dict
 from vermyth.schema import GeometricPacket
+
+
+class PermissionDenied(RuntimeError):
+    pass
+
+
 class VermythTools:
     """Execute MCP tools against a ResonanceEngine and Grimoire."""
     def __init__(
@@ -79,6 +86,7 @@ class VermythTools:
         grimoire: Grimoire,
         *,
         event_bus: EventBus | None = None,
+        allowed_tool_scope: list[str] | None = None,
     ) -> None:
         self._engine = engine
         self._grimoire = grimoire
@@ -89,6 +97,12 @@ class VermythTools:
             else DivergenceThresholds_DEFAULT
         )
         self._divergence_cache: dict[str, DivergenceReport] = {}
+        self._allowed_tool_scope = list(allowed_tool_scope or ["*"])
+
+    def enforce_tool_scope(self, tool_name: str) -> None:
+        if any(fnmatch.fnmatch(tool_name, pat) for pat in self._allowed_tool_scope):
+            return
+        raise PermissionDenied(f"tool_scope_denied:{tool_name}")
     def _emit_event(
         self,
         event_type: str,
@@ -188,18 +202,22 @@ class VermythTools:
         return program_tools.tool_list_programs(self, limit)
     def tool_execution_status(self, execution_id: str) -> dict[str, Any]:
         return program_tools.tool_execution_status(self, execution_id)
+    def tool_execution_receipt(self, execution_id: str) -> dict[str, Any]:
+        return program_tools.tool_execution_receipt(self, execution_id)
     def tool_propose_genesis(
         self,
         *,
         history_limit: int = 500,
         min_cluster_size: int = 15,
         min_unexplained_variance: float = 0.3,
+        min_coherence_rate: float = 0.6,
     ) -> list[dict[str, Any]]:
         out = genesis_tools.tool_propose_genesis(
             self,
             history_limit=history_limit,
             min_cluster_size=min_cluster_size,
             min_unexplained_variance=min_unexplained_variance,
+            min_coherence_rate=min_coherence_rate,
         )
         self._emit_event("genesis_propose", {"count": len(out)})
         return out
@@ -211,6 +229,13 @@ class VermythTools:
         return genesis_tools.tool_accept_genesis(self, genesis_id)
     def tool_reject_genesis(self, genesis_id: str) -> dict[str, Any]:
         return genesis_tools.tool_reject_genesis(self, genesis_id)
+    def tool_review_genesis(self, genesis_id: str, reviewer: str, note: str | None = None) -> dict[str, Any]:
+        return genesis_tools.tool_review_genesis(
+            self,
+            genesis_id=genesis_id,
+            reviewer=reviewer,
+            note=note,
+        )
     def tool_infer_causal_edge(self, source_cast_id: str, target_cast_id: str) -> dict[str, Any]:
         out = causal_tools.tool_infer_causal_edge(self, source_cast_id, target_cast_id)
         self._emit_event(
@@ -250,6 +275,7 @@ class VermythTools:
         parent_cast_id: str | None = None,
         causal_root_cast_id: str | None = None,
         thresholds: dict[str, Any] | None = None,
+        effects: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         out = decision_tools.tool_decide(
             self,
@@ -259,6 +285,7 @@ class VermythTools:
             parent_cast_id=parent_cast_id,
             causal_root_cast_id=causal_root_cast_id,
             thresholds=thresholds,
+            effects=effects,
         )
         decision = out.get("decision", {})
         cast = out.get("cast", {})

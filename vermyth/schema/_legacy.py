@@ -2,7 +2,7 @@ import hashlib
 import math
 from datetime import datetime, timezone
 from enum import Enum
-from typing import TypeAlias
+from typing import Any, Literal, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from ulid import ULID
@@ -182,6 +182,23 @@ class ProgramStatus(Enum):
     FAILED = "FAILED"
 
 
+class EffectType(Enum):
+    READ = "READ"
+    WRITE = "WRITE"
+    NETWORK = "NETWORK"
+    EXEC = "EXEC"
+    COMPUTE = "COMPUTE"
+    OBSERVE = "OBSERVE"
+    NONE = "NONE"
+
+
+class RollbackStrategy(Enum):
+    NONE = "NONE"
+    COMPENSATE = "COMPENSATE"
+    UNDO_LOG = "UNDO_LOG"
+    CHECKPOINT_RESTORE = "CHECKPOINT_RESTORE"
+
+
 class GenesisStatus(Enum):
     PROPOSED = "PROPOSED"
     ACCEPTED = "ACCEPTED"
@@ -329,6 +346,81 @@ class Intent(BaseModel):
     side_effect_tolerance: SideEffectTolerance
 
 
+class ResourceRef(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    kind: str = Field(min_length=1, max_length=64)
+    uri: str = Field(min_length=1, max_length=500)
+    scope: str = Field(min_length=1, max_length=200)
+    access: Literal["READ", "WRITE", "READ_WRITE"] = "READ"
+
+
+class Effect(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    effect_type: EffectType
+    target: ResourceRef | None = None
+    reversible: bool = True
+    cost_hint: float = Field(default=0.0, ge=0.0)
+
+
+class Permission(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    capability: str = Field(min_length=1, max_length=100)
+    scope_predicate: str = Field(min_length=1, max_length=300)
+
+
+class CapabilityToken(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    holder: str = Field(min_length=1, max_length=200)
+    tool_scope: str = Field(min_length=1, max_length=200)
+    expiry: datetime
+    issuer: str = Field(min_length=1, max_length=200)
+    signature: str = Field(min_length=16, max_length=512)
+    algorithm: str = Field(default="ED25519", min_length=3, max_length=20)
+
+
+class ConditionExpr(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    op: Literal["eq", "neq", "gt", "gte", "lt", "lte", "contains", "exists"]
+    key: str = Field(min_length=1, max_length=200)
+    value: Any | None = None
+
+
+class Precondition(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    predicate: str = Field(min_length=1, max_length=300)
+    expr: ConditionExpr | None = None
+
+
+class Postcondition(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    predicate: str = Field(min_length=1, max_length=300)
+    expr: ConditionExpr | None = None
+
+
+class Artifact(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    artifact_id: str = Field(default_factory=lambda: str(ULID()))
+    mime_type: str = Field(min_length=1, max_length=200)
+    bytes_ref: str = Field(min_length=1, max_length=500)
+    provenance_lineage: list[str] = Field(default_factory=list)
+
+
+class RetryPolicy(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    max_attempts: int = Field(default=1, ge=1, le=20)
+    backoff_ms: int = Field(default=0, ge=0, le=60000)
+    retry_on: list[EffectType] = Field(default_factory=list)
+
+
 class CastNode(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -342,6 +434,13 @@ class CastNode(BaseModel):
     merge_strategy: str | None = Field(
         default=None, pattern="^(FIRST_COHERENT|BEST_RESONANCE|ALL)$"
     )
+    preconditions: list[Precondition] | None = None
+    postconditions: list[Postcondition] | None = None
+    effects: list[Effect] | None = None
+    required_permissions: list[Permission] | None = None
+    retry_policy: RetryPolicy | None = None
+    rollback: RollbackStrategy | None = None
+    timeout_ms: int | None = Field(default=None, ge=1, le=3_600_000)
 
     @model_validator(mode="after")
     def _validate_node_payload(self) -> "CastNode":
@@ -397,6 +496,40 @@ class ProgramExecution(BaseModel):
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: datetime | None = None
     branch_id: str = Field(default_factory=lambda: str(ULID()))
+
+
+class NodeExecutionStatus(Enum):
+    SKIPPED = "SKIPPED"
+    RUNNING = "RUNNING"
+    OK = "OK"
+    FAILED = "FAILED"
+    ROLLED_BACK = "ROLLED_BACK"
+
+
+class NodeExecutionReceipt(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    node_id: str
+    status: NodeExecutionStatus
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    duration_ms: int = Field(default=0, ge=0)
+    precondition_results: list[dict[str, Any]] = Field(default_factory=list)
+    postcondition_results: list[dict[str, Any]] = Field(default_factory=list)
+    retries: int = Field(default=0, ge=0)
+    effect_summary: list[dict[str, Any]] = Field(default_factory=list)
+    error: str | None = None
+
+
+class ExecutionReceipt(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    receipt_id: str = Field(default_factory=lambda: str(ULID()))
+    execution_id: str
+    program_id: str
+    status: ProgramStatus
+    nodes: list[NodeExecutionReceipt] = Field(default_factory=list)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    completed_at: datetime | None = None
 
 
 class Sigil(BaseModel):
@@ -612,6 +745,26 @@ class PolicyThresholds(BaseModel):
     allow_min_resonance: float = Field(default=0.75, ge=0.0, le=1.0)
     reshape_min_resonance: float = Field(default=0.45, ge=0.0, le=1.0)
     max_drift_status: DivergenceStatus = DivergenceStatus.DRIFTING
+    scorer_weights: dict[str, float] = Field(
+        default_factory=lambda: {
+            "resonance": 0.5,
+            "divergence": 0.2,
+            "narrative": 0.1,
+            "effect_risk": 0.2,
+        }
+    )
+    #: When set, **DENY** if the effect_risk score component is below this (and its weight is positive),
+    #: even when the cast verdict is otherwise acceptable. ``None`` disables the gate.
+    effect_risk_min_score: float | None = Field(default=None, ge=0.0, le=1.0)
+
+
+class ScoreComponent(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    name: str = Field(min_length=1, max_length=100)
+    value: float = Field(ge=0.0, le=1.0)
+    weight: float = Field(ge=0.0, le=5.0)
+    explanation: str = Field(min_length=1, max_length=300)
 
 
 class PolicyDecision(BaseModel):
@@ -626,6 +779,8 @@ class PolicyDecision(BaseModel):
     divergence_status: DivergenceStatus | None = None
     narrative_coherence: float | None = Field(default=None, ge=0.0, le=1.0)
     thresholds: PolicyThresholds = Field(default_factory=PolicyThresholds)
+    scores: list[ScoreComponent] = Field(default_factory=list)
+    explanation: str | None = Field(default=None, max_length=500)
     model_name: str = Field(default="rule_based", min_length=1, max_length=100)
     model_version: str | None = Field(default="1", max_length=100)
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -825,6 +980,9 @@ class EmergentAspect(BaseModel):
     status: GenesisStatus = GenesisStatus.PROPOSED
     proposed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     decided_at: datetime | None = None
+    reviewed_by: str | None = None
+    reviewed_at: datetime | None = None
+    review_note: str | None = Field(default=None, max_length=500)
     evidence_cast_ids: list[str] = Field(default_factory=list)
 
     @field_validator("derived_polarity")

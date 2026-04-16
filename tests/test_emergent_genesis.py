@@ -92,5 +92,6 @@ def test_accept_emergent_aspect_registers_aspect(tmp_grimoire):
         evidence_cast_ids=["a", "b"],
     )
     tmp_grimoire.write_emergent_aspect(aspect)
+    tmp_grimoire.review_emergent_aspect(aspect.genesis_id, reviewer="tester", note="looks good")
     accepted = tmp_grimoire.accept_emergent_aspect(aspect.genesis_id)
     assert accepted.status.value == "ACCEPTED"

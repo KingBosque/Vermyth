@@ -49,3 +49,33 @@ def test_program_roundtrip_in_grimoire(tmp_grimoire):
     got = tmp_grimoire.read_program(program.program_id)
     assert got.program_id == program.program_id
     assert got.name == "demo-program"
+
+
+def test_program_node_effects_roundtrip(tmp_grimoire):
+    payload = _program_payload()
+    payload["nodes"][0]["effects"] = [
+        {
+            "effect_type": "WRITE",
+            "target": {
+                "kind": "file",
+                "uri": "workspace://notes.md",
+                "scope": "workspace",
+                "access": "READ_WRITE",
+            },
+            "reversible": False,
+            "cost_hint": 2.5,
+        }
+    ]
+    payload["nodes"][0]["retry_policy"] = {
+        "max_attempts": 3,
+        "backoff_ms": 50,
+        "retry_on": ["WRITE"],
+    }
+    program = SemanticProgram.model_validate(payload)
+    tmp_grimoire.write_program(program)
+    got = tmp_grimoire.read_program(program.program_id)
+    node = got.nodes[0]
+    assert node.effects is not None
+    assert node.effects[0].effect_type.value == "WRITE"
+    assert node.retry_policy is not None
+    assert node.retry_policy.max_attempts == 3

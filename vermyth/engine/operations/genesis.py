@@ -12,6 +12,7 @@ def propose_genesis(
     *,
     min_cluster_size: int = 15,
     min_unexplained_variance: float = 0.3,
+    min_coherence_rate: float = 0.6,
 ) -> list[EmergentAspect]:
     coherent = [
         c
@@ -50,6 +51,8 @@ def propose_genesis(
         centroid = [c / n for c in centroid]
         mean_res /= n
         coherence_rate = float(coh_count) / n if n > 0 else 0.0
+        if coherence_rate < float(min_coherence_rate):
+            continue
 
         total_abs = sum(abs(float(v)) for v in centroid) or 1.0
         explained = max(abs(float(v)) for v in centroid[:canonical_dim]) / total_abs

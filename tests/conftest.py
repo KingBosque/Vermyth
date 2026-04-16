@@ -10,6 +10,13 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line(
+        "markers",
+        "experimental: marks tests for experimental/frozen surfaces",
+    )
+
+
 @pytest.fixture(autouse=True)
 def _reset_global_state():
     """

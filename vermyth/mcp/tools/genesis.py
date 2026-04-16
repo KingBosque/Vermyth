@@ -27,8 +27,16 @@ TOOLS = [{'name': 'accept_genesis',
   'inputSchema': {'type': 'object',
                   'properties': {'history_limit': {'type': 'integer'},
                                  'min_cluster_size': {'type': 'integer'},
-                                 'min_unexplained_variance': {'type': 'number'}},
+                                 'min_unexplained_variance': {'type': 'number'},
+                                 'min_coherence_rate': {'type': 'number'}},
                   'required': []}},
+{'name': 'review_genesis',
+  'description': 'Review an emergent aspect proposal before accept/reject.',
+  'inputSchema': {'type': 'object',
+                  'properties': {'genesis_id': {'type': 'string'},
+                                 'reviewer': {'type': 'string'},
+                                 'note': {'type': 'string'}},
+                  'required': ['genesis_id', 'reviewer']}},
  {'name': 'reject_genesis',
   'description': 'Reject an emergent aspect proposal.',
   'inputSchema': {'type': 'object',
@@ -51,6 +59,9 @@ def emergent_aspect_to_dict(aspect) -> dict[str, Any]:
         "status": aspect.status.value,
         "proposed_at": aspect.proposed_at.isoformat(),
         "decided_at": aspect.decided_at.isoformat() if aspect.decided_at else None,
+        "reviewed_by": aspect.reviewed_by,
+        "reviewed_at": aspect.reviewed_at.isoformat() if aspect.reviewed_at else None,
+        "review_note": aspect.review_note,
         "evidence_cast_ids": list(aspect.evidence_cast_ids),
     }
 
@@ -61,12 +72,14 @@ def tool_propose_genesis(
     history_limit: int = 500,
     min_cluster_size: int = 15,
     min_unexplained_variance: float = 0.3,
+    min_coherence_rate: float = 0.6,
 ) -> list[dict[str, Any]]:
     history = tools._grimoire.query(SemanticQuery(limit=int(history_limit)))
     proposals = tools._engine.propose_genesis(
         history,
         min_cluster_size=int(min_cluster_size),
         min_unexplained_variance=float(min_unexplained_variance),
+        min_coherence_rate=float(min_coherence_rate),
     )
     for proposal in proposals:
         tools._grimoire.write_emergent_aspect(proposal)
@@ -90,6 +103,17 @@ def tool_reject_genesis(tools: "VermythTools", genesis_id: str) -> dict[str, Any
     return emergent_aspect_to_dict(rejected)
 
 
+def tool_review_genesis(
+    tools: "VermythTools",
+    *,
+    genesis_id: str,
+    reviewer: str,
+    note: str | None = None,
+) -> dict[str, Any]:
+    reviewed = tools._grimoire.review_emergent_aspect(genesis_id, reviewer, note)
+    return emergent_aspect_to_dict(reviewed)
+
+
 def dispatch_propose_genesis(
     tools: "VermythTools", arguments: dict[str, Any]
 ) -> list[dict[str, Any]]:
@@ -98,6 +122,7 @@ def dispatch_propose_genesis(
         history_limit=int(arguments.get("history_limit", 500)),
         min_cluster_size=int(arguments.get("min_cluster_size", 15)),
         min_unexplained_variance=float(arguments.get("min_unexplained_variance", 0.3)),
+        min_coherence_rate=float(arguments.get("min_coherence_rate", 0.6)),
     )
 
 
@@ -123,9 +148,21 @@ def dispatch_reject_genesis(
     return tool_reject_genesis(tools, genesis_id=arguments.get("genesis_id", ""))
 
 
+def dispatch_review_genesis(
+    tools: "VermythTools", arguments: dict[str, Any]
+) -> dict[str, Any]:
+    return tool_review_genesis(
+        tools,
+        genesis_id=arguments.get("genesis_id", ""),
+        reviewer=arguments.get("reviewer", ""),
+        note=arguments.get("note"),
+    )
+
+
 DISPATCH = {
     "accept_genesis": dispatch_accept_genesis,
     "genesis_proposals": dispatch_genesis_proposals,
     "propose_genesis": dispatch_propose_genesis,
+    "review_genesis": dispatch_review_genesis,
     "reject_genesis": dispatch_reject_genesis,
 }

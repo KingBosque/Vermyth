@@ -33,6 +33,9 @@ def test_http_adapter_endpoints(tmp_path: Path) -> None:
     try:
         tools = _request(f"{base}/tools")
         assert len(tools["tools"]) == len(TOOL_DEFINITIONS)
+        card = _request(f"{base}/.well-known/agent.json")
+        assert card["name"] == "vermyth"
+        assert card["skills"]
 
         cast = _request(
             f"{base}/tools/cast",
@@ -46,6 +49,25 @@ def test_http_adapter_endpoints(tmp_path: Path) -> None:
             },
         )["result"]
         assert "cast_id" in cast
+
+        a2a = _request(
+            f"{base}/a2a/tasks",
+            method="POST",
+            body={
+                "skill_id": "decide",
+                "input": {
+                    "intent": {
+                        "objective": "Reveal hidden structure",
+                        "scope": "analysis",
+                        "reversibility": "REVERSIBLE",
+                        "side_effect_tolerance": "LOW",
+                    },
+                    "aspects": ["MIND", "LIGHT"],
+                },
+            },
+        )
+        assert a2a["status"] == "completed"
+        assert a2a["artifact"] is not None
 
         decide = _request(
             f"{base}/tools/decide",

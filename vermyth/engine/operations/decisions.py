@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from vermyth.engine.policy.scorers import (
+    DivergenceScorer,
+    EffectRiskScorer,
+    NarrativeScorer,
+    ResonanceScorer,
+)
 from vermyth.contracts import GrimoireContract
 from vermyth.schema import (
     AspectID,
@@ -8,6 +14,7 @@ from vermyth.schema import (
     CausalQuery,
     DivergenceReport,
     DivergenceStatus,
+    Effect,
     Intent,
     PolicyAction,
     PolicyDecision,
@@ -27,6 +34,7 @@ def decide(
     causal_root_cast_id: str | None = None,
     thresholds: PolicyThresholds | None = None,
     grimoire: GrimoireContract | None = None,
+    effects: list[Effect] | None = None,
 ) -> tuple[PolicyDecision, CastResult]:
     policy_thresholds = thresholds or PolicyThresholds()
 
@@ -64,11 +72,33 @@ def decide(
 
     verdict = result.verdict.verdict_type
     adjusted = float(result.verdict.resonance.adjusted)
+    weights = dict(policy_thresholds.scorer_weights)
+    scorers = [
+        ResonanceScorer().score(
+            adjusted_resonance=adjusted, weight=float(weights.get("resonance", 0.0))
+        ),
+        DivergenceScorer().score(
+            divergence_status=divergence_status,
+            weight=float(weights.get("divergence", 0.0)),
+        ),
+        NarrativeScorer().score(
+            narrative_coherence=narrative_coherence,
+            weight=float(weights.get("narrative", 0.0)),
+        ),
+        EffectRiskScorer().score(
+            effects=effects or [],
+            weight=float(weights.get("effect_risk", 0.0)),
+        ),
+    ]
+    total_weight = sum(s.weight for s in scorers) or 1.0
+    aggregate_score = sum(s.value * s.weight for s in scorers) / total_weight
     action, rationale = engine._policy_model.decide(
         verdict=verdict,
         adjusted_resonance=adjusted,
         divergence_status=divergence_status,
         narrative_coherence=narrative_coherence,
+        scores=scorers,
+        aggregate_score=aggregate_score,
         thresholds=policy_thresholds,
     )
     suggested_intent = intent if action == PolicyAction.RESHAPE else None
@@ -82,6 +112,11 @@ def decide(
         divergence_status=divergence_status,
         narrative_coherence=narrative_coherence,
         thresholds=policy_thresholds,
+        scores=scorers,
+        explanation=(
+            f"aggregate={aggregate_score:.3f}; "
+            + ", ".join(f"{s.name}={s.value:.3f}" for s in scorers)
+        ),
         model_name=getattr(engine._policy_model, "name", "rule_based"),
         model_version=getattr(engine._policy_model, "version", "1"),
     )

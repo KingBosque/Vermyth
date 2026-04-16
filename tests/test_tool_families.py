@@ -11,7 +11,6 @@ from vermyth.mcp.tools import programs
 from vermyth.mcp.tools import query
 from vermyth.mcp.tools import registry
 from vermyth.mcp.tools import seeds
-from vermyth.mcp.tools import swarm
 
 
 FAMILY_MODULES = [
@@ -22,7 +21,6 @@ FAMILY_MODULES = [
     seeds,
     registry,
     drift,
-    swarm,
     programs,
     genesis,
     causal,
@@ -39,4 +37,4 @@ def test_tool_families_have_matching_tools_and_dispatch() -> None:
 
 def test_tool_definitions_stable_count() -> None:
     expected = sum(len(module.TOOLS) for module in FAMILY_MODULES)
-    assert len(TOOL_DEFINITIONS) == expected == 42
+    assert len(TOOL_DEFINITIONS) == expected
