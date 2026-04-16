@@ -10,12 +10,26 @@ requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.0",
     "python-ulid",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "hypothesis>=6",
+]
+llm = [
     "anthropic",
+]
+embed = [
+    "sentence-transformers",
 ]
 
 [project.scripts]
 vermyth = "vermyth.cli.main:main"
 vermyth-mcp = "vermyth.mcp.server:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["."]

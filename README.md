@@ -1,6 +1,6 @@
 # Vermyth
 
-**Vermyth** is a Python library and command-line tool that behaves as a small **semantic execution language** for AI-adjacent workflows. You describe a situation as a combination of symbolic **aspects**, declare an **intent** (objective, scope, reversibility, tolerance), and the system **composes** a resolved **sigil**, **evaluates** how well the intent aligns with that sigil’s geometry, and records the outcome. Persistence (the **grimoire**) and remote control (**MCP**) sit on top of the same core types and contracts.
+**Vermyth** is a Python library and command-line tool that behaves as a small **semantic execution language** for agent decision-gating workflows. You describe a situation as a combination of symbolic **aspects**, declare an **intent** (objective, scope, reversibility, tolerance), and the system **composes** a resolved **sigil**, **evaluates** how well the intent aligns with that sigil’s geometry, and records the outcome. Persistence (the **grimoire**) and remote control (**MCP**) sit on top of the same core types and contracts.
 
 This repository implements the full stack: **typed models**, **composition and resonance engines**, **SQLite storage**, an **MCP stdio server** (JSON-RPC 2.0, no third-party MCP SDK), and a **human-oriented CLI**.
 
@@ -17,6 +17,9 @@ This repository implements the full stack: **typed models**, **composition and r
 | **`Grimoire`** | SQLite persistence: casts, seeds, structured `query`, in-Python **semantic search** (cosine similarity over stored vectors), migrations (`v001`). |
 | **`VermythTools`** | Shared tool implementation used by MCP and CLI: cast, query, semantic search, inspect, seeds (serialization to plain dicts). |
 | **`VermythMCPServer`** | Stdio MCP: `initialize`, `tools/list`, `tools/call` with JSON-RPC error codes for validation and internal errors. |
+| **Session Codec V2** | Optional binary-first transport + session codec (`vermyth.protocol.session_codec`) that adds negotiated capabilities, replay-guarded sequence numbers, and identity-oriented packet proofs while keeping JSON-RPC V1 compatible. |
+| **Swarm evolution** | `ResonanceEngine.auto_cast` (self-healing fluid refinement), `swarm_cast` (weighted multi-peer aggregation + `SwarmState` in grimoire `v009`), and `GossipPayload` federation sync (`VERMYTH_FEDERATION_SECRET`) merged via `apply_gossip_sync`. |
+| **Triple evolutionary leap** | Semantic program compilation/execution (`SemanticProgram`), emergent aspect genesis (`EmergentAspect` + acceptance flow), and causal semantic graph tooling (`CausalEdge`, `CausalSubgraph`, predictive casting). |
 | **`VermythCLI`** | `argparse` subcommands: `cast`, `query`, `search`, `inspect`, `seeds` — formatted tables and detail views on stdout; errors on stderr, exit code 1. |
 
 ---
@@ -29,12 +32,65 @@ Requires **Python 3.11+**.
 pip install -e .
 ```
 
-Declared dependencies (see `pyproject.toml`): **Pydantic v2**, **python-ulid**, **anthropic** (reserved for future integration; the core library does not require calling Anthropic for local casts).
+Optional LLM projection backend:
+
+```bash
+pip install -e .[llm]
+```
+
+Declared base dependencies (see `pyproject.toml`): **Pydantic v2**, **python-ulid**. The optional `llm` extra installs **anthropic** for `VERMYTH_BACKEND=llm|auto`.
 
 Console entry points after install:
 
 - **`vermyth`** — CLI (`vermyth.cli.main:main`)
 - **`vermyth-mcp`** — MCP stdio server (`vermyth.mcp.server:main`)
+
+## Consumers
+
+- **CLI**: `vermyth ...` for human-readable workflows.
+- **MCP**: `vermyth-mcp` for JSON-RPC agent integrations.
+- **HTTP**: `python -m vermyth.adapters.http` for lightweight tool-style HTTP calls.
+  See [`docs/http_adapter.md`](docs/http_adapter.md) for endpoint details.
+
+### V1 compatibility vs V2 sessions
+
+- **V1 (default)**: MCP is **newline-delimited JSON-RPC 2.0** (`initialize`, `tools/list`, `tools/call`). The V1 “geometric” packet helpers (`vermyth.mcp.geometric`) remain **lossy** by design.
+- **V2 (optional)**: A session layer with **canonical packets** and **replay protection**:
+  - `SessionRecord`, `CanonicalPacketV2`, `CanonicalResponseV2` in `vermyth.schema`
+  - Persistence in the grimoire (`v008_sessions.sql`)
+  - Codec helpers in `vermyth.protocol.session_codec`
+  - Optional **binary framing** in the MCP server when `VERMYTH_BINARY_TRANSPORT=1`
+
+### Swarm and federation
+
+- **`auto_cast`** (`vermyth` CLI / MCP `auto_cast`): iteratively blends the semantic vector toward the fluid sigil until the verdict reaches `target_resonance` or `max_depth`.
+- **Swarms** (`swarm_join`, `swarm_cast`, `swarm_status`): peers share a `swarm_id`; vectors are aggregated with weights `1 + 0.01 * min(100, coherence_streak)`.
+- **Gossip** (`gossip_sync` / binary frames `GOSSIP_PUSH` / `GOSSIP_PULL`): JSON payload signed with `sign_gossip_payload`; set **`VERMYTH_FEDERATION_SECRET`** for verification.
+
+### Semantic programs
+
+- **`SemanticProgram`** defines a DAG of `CastNode`s (`CAST`, `FLUID_CAST`, `AUTO_CAST`, `GATE`, `MERGE`).
+- Compile with MCP/CLI (`compile_program`, `compile-program`) to validate graph integrity and mark `COMPILED`.
+- Execute with (`execute_program`, `execute-program`) to produce a `ProgramExecution` with node->cast mapping and branch lineage.
+- Persisted in grimoire migration **`v010_semantic_programs.sql`** (`programs`, `program_executions`).
+
+### Emergent aspect genesis
+
+- `ResonanceEngine.propose_genesis(...)` analyzes coherent cast history and proposes `EmergentAspect` candidates.
+- Proposals are stored in **`v011_emergent_aspects.sql`** and exposed by tools/CLI:
+  - `propose_genesis`, `genesis_proposals`, `accept_genesis`, `reject_genesis`
+  - `propose-genesis`, `genesis-proposals`, `accept-genesis`, `reject-genesis`
+- Accepting a proposal registers a concrete `RegisteredAspect` and extends semantic dimensionality.
+
+### Causal semantic graphs
+
+- Typed causal edges: `CAUSES`, `INHIBITS`, `ENABLES`, `REQUIRES` (`CausalEdgeType`).
+- Graph traversal via `CausalQuery` -> `CausalSubgraph`, with narrative coherence scoring.
+- Predictive casting uses causal context to seed `auto_cast`.
+- Persisted in **`v012_causal_graph.sql`** (`causal_edges`) with MCP/CLI support:
+  - `infer_causal_edge`, `add_causal_edge`, `causal_subgraph`, `evaluate_narrative`, `predictive_cast`
+  - `infer-cause`, `add-cause`, `causal-graph`, `evaluate-narrative`, `predictive-cast`
+- Binary transport adds frame type `CAUSAL_SYNC` for causal edge federation sync.
 
 ---
 
@@ -122,11 +178,46 @@ Errors go to **stderr**; the process exits with **1** on failure. Missing or inv
 
 Runs a **newline-delimited JSON-RPC 2.0** server on stdio (protocol subset: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`). **Stderr** is for logs only.
 
-With default configuration, **`main()`** builds a **`CompositionEngine`**, **`Grimoire()`** (default database under `~/.vermyth/grimoire.db`), and **`ResonanceEngine`** with `backend=None`. If **`VERMYTH_BACKEND`** is set in the environment, the server logs that dynamic backend loading is not implemented and continues with partial projection.
+With default configuration, **`main()`** builds a **`CompositionEngine`**, **`Grimoire()`** (default database under `~/.vermyth/grimoire.db`), and **`ResonanceEngine`** with env-driven backend selection (defaults to partial projection).
 
-Tool names exposed to clients: **`cast`**, **`query`**, **`semantic_search`**, **`inspect`**, **`seeds`** — each backed by **`VermythTools`** when engine and grimoire are configured.
+Tool names exposed to clients include casting/query primitives plus advanced families for sessions, swarms, programs, genesis, and causal graphs. See `TOOL_DEFINITIONS` in `vermyth/mcp/tool_definitions.py` for the authoritative list.
 
 ---
+
+## Projection backends (env configuration)
+
+Vermyth can optionally project intent text into aspect space using a selectable backend. This affects cast semantic quality; when unavailable or misconfigured, Vermyth will fall back without crashing.
+
+Environment variables:
+
+- **`VERMYTH_BACKEND`**: `none` | `local` | `embed` | `llm` | `auto` (default: `none`)
+  - **`none`**: no semantic projection (constraint-only, `ProjectionMethod.PARTIAL`)
+  - **`local`**: deterministic keyword-based projection
+  - **`embed`**: embedding-based projection (install optional extra: `pip install -e .[embed]`)
+  - **`llm`**: LLM projection only (errors if misconfigured)
+  - **`auto`**: try LLM projection; on failure fall back (see `VERMYTH_FALLBACK`)
+- **`VERMYTH_PROVIDER`**: provider id for `llm` / `auto` (default: `anthropic`)
+- **`VERMYTH_MODEL`**: provider model string (default: `claude-3-5-sonnet-latest`)
+- **`VERMYTH_ANTHROPIC_API_KEY`**: Anthropic API key (preferred for `anthropic`)
+- **`VERMYTH_API_KEY`**: generic API key fallback (used if provider-specific key not set)
+- **`VERMYTH_FALLBACK`**: `local` | `none` (default: `local`)
+- **`VERMYTH_TIMEOUT_S`**: float seconds (default: `10`)
+- **`VERMYTH_EMBED_MODEL`**: sentence-transformers model id (default: `all-MiniLM-L6-v2`)
+
+Examples:
+
+```bash
+# Deterministic local projection
+set VERMYTH_BACKEND=local
+vermyth cast --aspects MIND LIGHT --objective "Study the pattern" --scope "repo" --reversibility REVERSIBLE --side-effect-tolerance HIGH
+
+# LLM projection with local fallback
+set VERMYTH_BACKEND=auto
+set VERMYTH_PROVIDER=anthropic
+set VERMYTH_ANTHROPIC_API_KEY=...
+set VERMYTH_FALLBACK=local
+vermyth-mcp
+```
 
 ## Programmatic use
 
@@ -155,26 +246,33 @@ With persistence, construct **`Grimoire(db_path=...)`** and **`VermythTools(engi
 
 ## Project layout
 
-```
+```text
 vermyth/
-  schema.py           # Data models
-  contracts.py        # ABCs for engine, grimoire, MCP, CLI
-  data/sigils/        # JSON sigil tables + contradictions
+  schema.py                 # Data models
+  contracts.py              # ABCs for engine, grimoire, MCP, CLI
+  data/sigils/              # JSON sigil tables + contradictions
   engine/
-    composition.py    # CompositionEngine
-    resonance.py      # ResonanceEngine
+    composition.py          # CompositionEngine
+    resonance.py            # ResonanceEngine facade
+    operations/             # Engine family modules
   grimoire/
-    store.py          # Grimoire (SQLite)
-    migrations/       # SQL migrations
+    store.py                # Grimoire facade
+    repositories/           # Persistence family repositories
+    migrations/             # SQL migrations
   mcp/
-    protocol.py       # JSON-RPC helpers
-    server.py         # VermythMCPServer
-    tools.py          # VermythTools (MCP + CLI)
+    protocol.py             # JSON-RPC helpers
+    tool_definitions.py     # TOOL_DEFINITIONS registry
+    server.py               # VermythMCPServer facade + dispatch
+    tools/
+      facade.py             # VermythTools class
+      *.py                  # Family tool modules + serializers
   cli/
-    format.py         # Text formatting
-    main.py           # VermythCLI
-tests/                # pytest suite
-pyproject.toml        # Packaging and scripts
+    format.py               # Text formatting
+    parser.py               # Parser + command router
+    main.py                 # VermythCLI facade
+    commands/               # Family command modules
+tests/                      # pytest suite
+pyproject.toml              # Packaging and scripts
 ```
 
 ---

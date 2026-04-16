@@ -1,10 +1,3 @@
-import sys
-from pathlib import Path
-
-_root = Path(__file__).resolve().parents[1]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
-
 import pytest
 
 from vermyth.contracts import GrimoireContract
@@ -164,6 +157,60 @@ def test_query_respects_limit(tmp_path):
     q = SemanticQuery(limit=2)
     rows = g.query(q)
     assert len(rows) == 2
+    g.close()
+
+
+def test_query_aspect_filter(tmp_path):
+    g = Grimoire(db_path=tmp_path / "q_aspect.db")
+    comp = CompositionEngine()
+    eng = ResonanceEngine(comp, backend=None)
+    intent = Intent(
+        objective="a",
+        scope="b",
+        reversibility=ReversibilityClass.REVERSIBLE,
+        side_effect_tolerance=SideEffectTolerance.LOW,
+    )
+    r_a = eng.cast(frozenset({AspectID.MIND, AspectID.LIGHT}), intent)
+    r_b = eng.cast(frozenset({AspectID.FORM, AspectID.LIGHT}), intent)
+    g.write(r_a)
+    g.write(r_b)
+    q = SemanticQuery(aspect_filter=frozenset({AspectID.MIND, AspectID.LIGHT}), limit=20)
+    rows = g.query(q)
+    assert {x.cast_id for x in rows} == {r_a.cast_id}
+    g.close()
+
+
+def test_query_effect_class_filter(tmp_path):
+    g = Grimoire(db_path=tmp_path / "q_effect.db")
+    r = make_cast_result()
+    g.write(r)
+    q = SemanticQuery(effect_class_filter=r.sigil.effect_class, limit=20)
+    rows = g.query(q)
+    assert len(rows) == 1
+    assert rows[0].cast_id == r.cast_id
+    g.close()
+
+
+def test_query_branch_id_filter(tmp_path):
+    g = Grimoire(db_path=tmp_path / "q_branch.db")
+    base = make_cast_result()
+    r1 = CastResult.model_construct(
+        cast_id=base.cast_id,
+        timestamp=base.timestamp,
+        intent=base.intent,
+        sigil=base.sigil,
+        verdict=base.verdict,
+        immutable=True,
+        lineage=Lineage(parent_cast_id="p", depth=1, branch_id="branch-a"),
+        glyph_seed_id=None,
+        provenance=None,
+    )
+    r2 = make_cast_result()
+    g.write(r1)
+    g.write(r2)
+    q = SemanticQuery(branch_id="branch-a", limit=20)
+    rows = g.query(q)
+    assert {x.cast_id for x in rows} == {r1.cast_id}
     g.close()
 
 

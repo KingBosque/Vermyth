@@ -7,21 +7,28 @@ import sys
 from typing import Optional
 
 from vermyth.contracts import CLIContract
-from vermyth.engine.composition import CompositionEngine
 from vermyth.engine.resonance import ResonanceEngine
+from vermyth.cli.commands import auto_cast as auto_cast_command
+from vermyth.cli.commands import cast as cast_command
+from vermyth.cli.commands import causal as causal_command
+from vermyth.cli.commands import decide as decide_command
+from vermyth.cli.commands import drift as drift_command
+from vermyth.cli.commands import genesis as genesis_command
+from vermyth.cli import parser as cli_parser
+from vermyth.cli.commands import programs as program_command
+from vermyth.cli.commands import query as query_command
+from vermyth.cli.commands import registry as registry_command
+from vermyth.cli.commands import swarm as swarm_command
+from vermyth.bootstrap import build_tools, build_tools_from_env
+from vermyth.engine.projection_backends import NullProjectionBackend
 from vermyth.grimoire.store import Grimoire
-from vermyth.cli.format import (
-    format_cast_result,
-    format_cast_table,
-    format_search_table,
-    format_seed_table,
-)
 from vermyth.mcp.tools import VermythTools
-
-
+from vermyth.registry import AspectRegistry
+from vermyth.schema import DivergenceReport
+from vermyth.mcp.geometric import decode_packet, encode_packet
+from vermyth.schema import GeometricPacket, Intent, SemanticVector, ReversibilityClass, SideEffectTolerance
 class VermythCLI(CLIContract):
     """Command-line interface over VermythTools."""
-
     def __init__(
         self,
         engine: ResonanceEngine | None = None,
@@ -31,13 +38,17 @@ class VermythCLI(CLIContract):
             self._engine = engine
             self._grimoire = grimoire
         else:
-            composition = CompositionEngine()
-            self._grimoire = Grimoire()
-            self._engine = ResonanceEngine(
-                composition_engine=composition, backend=None
-            )
-        self._tools = VermythTools(self._engine, self._grimoire)
-
+            try:
+                self._grimoire, _composition, self._engine, self._tools = build_tools_from_env(
+                    None
+                )
+            except ValueError as exc:
+                print(f"[vermyth] invalid backend configuration: {exc}", file=sys.stderr)
+                self._grimoire, _composition, self._engine, self._tools = build_tools(
+                    None, backend=NullProjectionBackend()
+                )
+        if not hasattr(self, "_tools"):
+            self._tools = VermythTools(self._engine, self._grimoire)
     def cmd_cast(
         self,
         aspects: list[str],
@@ -45,33 +56,206 @@ class VermythCLI(CLIContract):
         scope: str,
         reversibility: str,
         side_effect_tolerance: str,
+        *,
+        parent_cast_id: Optional[str] = None,
+        branch_id: Optional[str] = None,
+        fail_on_diverged: bool = False,
+        chained: bool = False,
+        force: bool = False,
     ) -> None:
-        try:
-            result = self._tools.tool_cast(
-                aspects=aspects,
-                intent={
-                    "objective": objective,
-                    "scope": scope,
-                    "reversibility": reversibility,
-                    "side_effect_tolerance": side_effect_tolerance,
-                },
-            )
-            print(format_cast_result(result))
-        except ValueError as e:
-            print(str(e), file=sys.stderr)
-            sys.exit(1)
-        except RuntimeError as e:
-            print(str(e), file=sys.stderr)
-            sys.exit(1)
-        except Exception as e:
-            if (
-                type(e).__name__ == "ValidationError"
-                and type(e).__module__.startswith("pydantic")
-            ):
-                print(str(e), file=sys.stderr)
-                sys.exit(1)
-            raise
-
+        return cast_command.cmd_cast(
+            self,
+            aspects,
+            objective,
+            scope,
+            reversibility,
+            side_effect_tolerance,
+            parent_cast_id=parent_cast_id,
+            branch_id=branch_id,
+            fail_on_diverged=fail_on_diverged,
+            chained=chained,
+            force=force,
+        )
+    def cmd_decide(
+        self,
+        *,
+        objective: str,
+        scope: str,
+        reversibility: str,
+        side_effect_tolerance: str,
+        aspects: list[str] | None = None,
+        vector: list[float] | None = None,
+        parent_cast_id: str | None = None,
+        causal_root_cast_id: str | None = None,
+        policy_model: str | None = None,
+        tuned_thresholds_path: str | None = None,
+    ) -> None:
+        return decide_command.cmd_decide(
+            self,
+            objective=objective,
+            scope=scope,
+            reversibility=reversibility,
+            side_effect_tolerance=side_effect_tolerance,
+            aspects=aspects,
+            vector=vector,
+            parent_cast_id=parent_cast_id,
+            causal_root_cast_id=causal_root_cast_id,
+            policy_model=policy_model,
+            tuned_thresholds_path=tuned_thresholds_path,
+        )
+    def cmd_fluid_cast(
+        self,
+        vector: list[float],
+        objective: str,
+        scope: str,
+        reversibility: str,
+        side_effect_tolerance: str,
+        *,
+        parent_cast_id: Optional[str] = None,
+        branch_id: Optional[str] = None,
+        fail_on_diverged: bool = False,
+    ) -> None:
+        return cast_command.cmd_fluid_cast(
+            self,
+            vector,
+            objective,
+            scope,
+            reversibility,
+            side_effect_tolerance,
+            parent_cast_id=parent_cast_id,
+            branch_id=branch_id,
+            fail_on_diverged=fail_on_diverged,
+        )
+    def cmd_auto_cast(
+        self,
+        vector: list[float],
+        objective: str,
+        scope: str,
+        reversibility: str,
+        side_effect_tolerance: str,
+        *,
+        max_depth: int = 5,
+        target_resonance: float = 0.75,
+        blend_alpha: float = 0.35,
+        trace: bool = False,
+    ) -> None:
+        return auto_cast_command.cmd_auto_cast(
+            self,
+            vector,
+            objective,
+            scope,
+            reversibility,
+            side_effect_tolerance,
+            max_depth=max_depth,
+            target_resonance=target_resonance,
+            blend_alpha=blend_alpha,
+            trace=trace,
+        )
+    def cmd_swarm_join(
+        self, swarm_id: str, session_id: str, *, consensus_threshold: float = 0.75
+    ) -> None:
+        return swarm_command.cmd_swarm_join(
+            self,
+            swarm_id=swarm_id,
+            session_id=session_id,
+            consensus_threshold=consensus_threshold,
+        )
+    def cmd_swarm_cast(
+        self,
+        swarm_id: str,
+        session_id: str,
+        vector: list[float],
+        objective: str,
+        scope: str,
+        reversibility: str,
+        side_effect_tolerance: str,
+        *,
+        consensus_threshold: Optional[float] = None,
+    ) -> None:
+        return swarm_command.cmd_swarm_cast(
+            self,
+            swarm_id=swarm_id,
+            session_id=session_id,
+            vector=vector,
+            objective=objective,
+            scope=scope,
+            reversibility=reversibility,
+            side_effect_tolerance=side_effect_tolerance,
+            consensus_threshold=consensus_threshold,
+        )
+    def cmd_swarm_status(self, swarm_id: str) -> None:
+        return swarm_command.cmd_swarm_status(self, swarm_id)
+    def cmd_gossip_sync(self, path: str) -> None:
+        return swarm_command.cmd_gossip_sync(self, path)
+    def cmd_compile_program(self, path: str) -> None:
+        return program_command.cmd_compile_program(self, path)
+    def cmd_execute_program(self, program_id: str) -> None:
+        return program_command.cmd_execute_program(self, program_id)
+    def cmd_program_status(self, program_id: str) -> None:
+        return program_command.cmd_program_status(self, program_id)
+    def cmd_list_programs(self, limit: int = 50) -> None:
+        return program_command.cmd_list_programs(self, int(limit))
+    def cmd_execution_status(self, execution_id: str) -> None:
+        return program_command.cmd_execution_status(self, execution_id)
+    def cmd_propose_genesis(
+        self,
+        *,
+        history_limit: int = 500,
+        min_cluster_size: int = 15,
+        min_unexplained_variance: float = 0.3,
+    ) -> None:
+        return genesis_command.cmd_propose_genesis(
+            self,
+            history_limit=history_limit,
+            min_cluster_size=min_cluster_size,
+            min_unexplained_variance=min_unexplained_variance,
+        )
+    def cmd_genesis_proposals(self, *, status: str | None = None, limit: int = 50) -> None:
+        return genesis_command.cmd_genesis_proposals(self, status=status, limit=limit)
+    def cmd_accept_genesis(self, genesis_id: str) -> None:
+        return genesis_command.cmd_accept_genesis(self, genesis_id)
+    def cmd_reject_genesis(self, genesis_id: str) -> None:
+        return genesis_command.cmd_reject_genesis(self, genesis_id)
+    def cmd_infer_cause(self, source_cast_id: str, target_cast_id: str) -> None:
+        return causal_command.cmd_infer_cause(self, source_cast_id, target_cast_id)
+    def cmd_add_cause(self, payload: dict[str, object]) -> None:
+        return causal_command.cmd_add_cause(self, payload)
+    def cmd_causal_graph(
+        self,
+        *,
+        root_cast_id: str,
+        edge_types: list[str] | None = None,
+        direction: str = "both",
+        max_depth: int = 5,
+        min_weight: float = 0.0,
+    ) -> None:
+        return causal_command.cmd_causal_graph(
+            self,
+            root_cast_id=root_cast_id,
+            edge_types=edge_types,
+            direction=direction,
+            max_depth=max_depth,
+            min_weight=min_weight,
+        )
+    def cmd_evaluate_narrative(self, edge_ids: list[str]) -> None:
+        return causal_command.cmd_evaluate_narrative(self, edge_ids)
+    def cmd_predictive_cast(
+        self,
+        *,
+        root_cast_id: str,
+        objective: str,
+        scope: str,
+        reversibility: str,
+        side_effect_tolerance: str,
+    ) -> None:
+        return causal_command.cmd_predictive_cast(
+            self,
+            root_cast_id=root_cast_id,
+            objective=objective,
+            scope=scope,
+            reversibility=reversibility,
+            side_effect_tolerance=side_effect_tolerance,
+        )
     def cmd_query(
         self,
         verdict: Optional[str],
@@ -79,188 +263,127 @@ class VermythCLI(CLIContract):
         branch_id: Optional[str],
         limit: int,
     ) -> None:
-        try:
-            filters: dict = {"limit": limit}
-            if verdict is not None:
-                filters["verdict_filter"] = verdict
-            if min_resonance is not None:
-                filters["min_resonance"] = min_resonance
-            if branch_id is not None:
-                filters["branch_id"] = branch_id
-            results = self._tools.tool_query(filters)
-            print(format_cast_table(results))
-        except ValueError as e:
-            print(str(e), file=sys.stderr)
-            sys.exit(1)
-        except RuntimeError as e:
-            print(str(e), file=sys.stderr)
-            sys.exit(1)
-        except Exception as e:
-            if (
-                type(e).__name__ == "ValidationError"
-                and type(e).__module__.startswith("pydantic")
-            ):
-                print(str(e), file=sys.stderr)
-                sys.exit(1)
-            raise
-
+        return query_command.cmd_query(
+            self,
+            verdict_filter=verdict,
+            min_resonance=min_resonance,
+            branch_id=branch_id,
+            limit=limit,
+        )
     def cmd_search(self, vector: list[float], threshold: float, limit: int) -> None:
-        try:
-            results = self._tools.tool_semantic_search(
-                proximity_vector=vector,
-                threshold=threshold,
-                limit=limit,
-            )
-            print(format_search_table(results, similarities=None))
-        except ValueError as e:
-            print(str(e), file=sys.stderr)
-            sys.exit(1)
-        except RuntimeError as e:
-            print(str(e), file=sys.stderr)
-            sys.exit(1)
-
+        return query_command.cmd_search(self, vector, threshold, limit)
     def cmd_inspect(self, cast_id: str) -> None:
-        try:
-            result = self._tools.tool_inspect(cast_id=cast_id)
-            print(format_cast_result(result))
-        except KeyError:
-            print(f"Cast not found: {cast_id}", file=sys.stderr)
-            sys.exit(1)
-        except RuntimeError as e:
-            print(str(e), file=sys.stderr)
-            sys.exit(1)
-
+        return query_command.cmd_inspect(self, cast_id)
     def cmd_seeds(self, crystallized: Optional[bool]) -> None:
+        return query_command.cmd_seeds(self, crystallized)
+    def cmd_lineage(self, cast_id: str, max_depth: int) -> None:
+        return query_command.cmd_lineage(self, cast_id, max_depth)
+    def cmd_crystallized_sigils(self) -> None:
+        return query_command.cmd_crystallized_sigils(self)
+    def cmd_register_aspect(
+        self, aspect_id: str, polarity: int, entropy_coefficient: float, symbol: str
+    ) -> None:
+        return registry_command.cmd_register_aspect(
+            self,
+            aspect_id=aspect_id,
+            polarity=polarity,
+            entropy_coefficient=entropy_coefficient,
+            symbol=symbol,
+        )
+    def cmd_register_sigil(self, payload: dict) -> None:
+        return registry_command.cmd_register_sigil(self, payload)
+    def cmd_aspects(self) -> None:
+        return registry_command.cmd_aspects(self)
+    def cmd_registered_sigils(self) -> None:
+        return registry_command.cmd_registered_sigils(self)
+    def cmd_divergence(self, cast_id: str) -> None:
+        return drift_command.cmd_divergence(self, cast_id)
+    def cmd_set_thresholds(
+        self,
+        l2_stable: Optional[float],
+        l2_diverged: Optional[float],
+        cosine_stable: Optional[float],
+        cosine_diverged: Optional[float],
+    ) -> None:
+        return drift_command.cmd_set_thresholds(
+            self,
+            l2_stable_max=l2_stable,
+            l2_diverged_min=l2_diverged,
+            cosine_stable_max=cosine_stable,
+            cosine_diverged_min=cosine_diverged,
+        )
+    def cmd_thresholds(self) -> None:
+        return drift_command.cmd_thresholds(self)
+    def cmd_divergences(
+        self,
+        status: Optional[str],
+        limit: int,
+        since: Optional[str],
+    ) -> None:
+        return drift_command.cmd_divergences(
+            self,
+            status=status,
+            limit=limit,
+            since=since,
+        )
+    def cmd_drift_branches(self, limit: int) -> None:
+        return drift_command.cmd_drift_branches(self, limit)
+    def cmd_lineage_drift(self, cast_id: str, max_depth: int, top_k: int) -> None:
+        return drift_command.cmd_lineage_drift(self, cast_id, max_depth, top_k)
+    def cmd_backfill_divergence(self, limit: int) -> None:
+        return drift_command.cmd_backfill_divergence(self, limit)
+    def cmd_geometric_cast(
+        self, payload: list[float], *, version: int = 1, branch_id: str | None = None, force: bool = False
+    ) -> None:
         try:
-            results = self._tools.tool_seeds(crystallized=crystallized)
-            print(format_seed_table(results))
-        except RuntimeError as e:
+            out = self._tools.tool_geometric_cast(
+                payload=payload, version=int(version), branch_id=branch_id, force=bool(force)
+            )
+            print(out)
+        except (ValueError, RuntimeError) as e:
             print(str(e), file=sys.stderr)
             sys.exit(1)
-
+    def cmd_encode(
+        self,
+        *,
+        vector: list[float],
+        objective: str,
+        scope: str,
+        reversibility: str,
+        side_effect_tolerance: str,
+    ) -> None:
+        intent = Intent(
+            objective=str(objective),
+            scope=str(scope),
+            reversibility=ReversibilityClass[str(reversibility)],
+            side_effect_tolerance=SideEffectTolerance[str(side_effect_tolerance)],
+        )
+        vec = SemanticVector(components=tuple(float(x) for x in vector))
+        packet = encode_packet(vec, intent, lineage=None)
+        print({"version": packet.version, "payload": list(packet.payload)})
+    def cmd_decode(self, *, payload: list[float], version: int = 1) -> None:
+        packet = GeometricPacket(payload=tuple(float(x) for x in payload), version=int(version))
+        vec, intent, lineage = decode_packet(packet)
+        print(
+            {
+                "vector": [round(c, 6) for c in vec.components],
+                "intent": {
+                    "objective": intent.objective,
+                    "scope": intent.scope,
+                    "reversibility": intent.reversibility.name,
+                    "side_effect_tolerance": intent.side_effect_tolerance.name,
+                },
+                "lineage": lineage.model_dump() if lineage is not None else None,
+                "proof_valid": packet.validate_proof(),
+            }
+        )
     def build_parser(self) -> argparse.ArgumentParser:
-        p = argparse.ArgumentParser(
-            prog="vermyth",
-            description="Vermyth — semantic execution language for AI systems.",
-        )
-        subs = p.add_subparsers(dest="command", required=True)
-
-        c = subs.add_parser("cast", help="Cast aspects with an intent.")
-        c.add_argument(
-            "--aspects",
-            nargs="+",
-            required=True,
-            metavar="ASPECT",
-            help="One to three aspect names. Valid: VOID FORM MOTION MIND DECAY LIGHT.",
-        )
-        c.add_argument(
-            "--objective",
-            required=True,
-            metavar="TEXT",
-            help="What this casting should accomplish. Max 500 chars.",
-        )
-        c.add_argument(
-            "--scope",
-            required=True,
-            metavar="TEXT",
-            help="Bounded domain this casting applies to. Max 200 chars.",
-        )
-        c.add_argument(
-            "--reversibility",
-            required=True,
-            choices=["REVERSIBLE", "PARTIAL", "IRREVERSIBLE"],
-        )
-        c.add_argument(
-            "--side-effect-tolerance",
-            required=True,
-            choices=["NONE", "LOW", "MEDIUM", "HIGH"],
-            dest="side_effect_tolerance",
-        )
-
-        q = subs.add_parser("query", help="Query stored casts.")
-        q.add_argument(
-            "--verdict",
-            choices=["COHERENT", "PARTIAL", "INCOHERENT"],
-            default=None,
-        )
-        q.add_argument(
-            "--min-resonance",
-            type=float,
-            default=None,
-            dest="min_resonance",
-        )
-        q.add_argument("--branch-id", default=None, dest="branch_id")
-        q.add_argument("--limit", type=int, default=20)
-
-        s = subs.add_parser("search", help="Semantic search over casts.")
-        s.add_argument(
-            "--vector",
-            nargs=6,
-            type=float,
-            required=True,
-            metavar="F",
-            help="Six floats in canonical aspect order: VOID FORM MOTION MIND DECAY LIGHT.",
-        )
-        s.add_argument("--threshold", type=float, required=True)
-        s.add_argument("--limit", type=int, default=20)
-
-        i = subs.add_parser("inspect", help="Inspect one cast by id.")
-        i.add_argument("cast_id", metavar="CAST_ID")
-
-        sd = subs.add_parser("seeds", help="List glyph seeds.")
-        sd.add_argument(
-            "--crystallized",
-            action="store_true",
-            default=None,
-            help="Show only crystallized seeds.",
-        )
-        sd.add_argument(
-            "--accumulating",
-            action="store_true",
-            default=None,
-            help="Show only accumulating seeds.",
-        )
-        return p
-
+        return cli_parser.build_parser()
     def run(self, args: list[str] | None = None) -> None:
-        ns = self.build_parser().parse_args(args)
-        if ns.command == "cast":
-            self.cmd_cast(
-                aspects=ns.aspects,
-                objective=ns.objective,
-                scope=ns.scope,
-                reversibility=ns.reversibility,
-                side_effect_tolerance=ns.side_effect_tolerance,
-            )
-        elif ns.command == "query":
-            self.cmd_query(
-                verdict=ns.verdict,
-                min_resonance=ns.min_resonance,
-                branch_id=ns.branch_id,
-                limit=ns.limit,
-            )
-        elif ns.command == "search":
-            self.cmd_search(
-                vector=list(ns.vector),
-                threshold=ns.threshold,
-                limit=ns.limit,
-            )
-        elif ns.command == "inspect":
-            self.cmd_inspect(cast_id=ns.cast_id)
-        elif ns.command == "seeds":
-            if ns.crystallized:
-                self.cmd_seeds(crystallized=True)
-            elif ns.accumulating:
-                self.cmd_seeds(crystallized=False)
-            else:
-                self.cmd_seeds(crystallized=None)
-        else:
-            raise SystemExit(2)
-
+        return cli_parser.run(self, args)
 
 def main() -> None:
     VermythCLI().run()
-
 
 if __name__ == "__main__":
     main()

@@ -1,11 +1,19 @@
-"""MCP stdio server skeleton (JSON-RPC 2.0, newline-delimited)."""
+"""MCP stdio server skeleton (JSON-RPC 2.0, newline-delimited).
+
+Also supports an optional binary-first session transport when enabled.
+"""
 
 from __future__ import annotations
 
 import json
+import os
 import sys
-from typing import Any, TextIO
+from typing import Any, BinaryIO, TextIO
 
+from vermyth.mcp.binary_transport import FrameType, decode_frame_from_buffer, encode_frame
+
+from vermyth.bootstrap import build_tools, build_tools_from_env
+from vermyth.engine.projection_backends import NullProjectionBackend
 from vermyth.engine.resonance import ResonanceEngine
 from vermyth.grimoire.store import Grimoire
 from vermyth.mcp.protocol import (
@@ -24,125 +32,34 @@ from vermyth.mcp.protocol import (
     make_error,
     make_success,
 )
+from vermyth.mcp.tools import casting as casting_tools
+from vermyth.mcp.tools import causal as causal_tools
+from vermyth.mcp.tools import decisions as decision_tools
+from vermyth.mcp.tools import drift as drift_tools
+from vermyth.mcp.tools import genesis as genesis_tools
+from vermyth.mcp.tools import observability as observability_tools
+from vermyth.mcp.tools import programs as program_tools
+from vermyth.mcp.tools import query as query_tools
+from vermyth.mcp.tools import registry as registry_tools
+from vermyth.mcp.tools import seeds as seed_tools
+from vermyth.mcp.tools import session as session_tools
+from vermyth.mcp.tools import swarm as swarm_tools
 from vermyth.mcp.tools import VermythTools
+from vermyth.mcp.tool_definitions import TOOL_DEFINITIONS
 
-TOOL_DEFINITIONS = [
-    {
-        "name": "cast",
-        "description": "Compose aspects into a Sigil and evaluate against a declared Intent. Returns a fully typed CastResult.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "aspects": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "List of AspectID names. Valid values: VOID, FORM, MOTION, MIND, DECAY, LIGHT. Between 1 and 3 inclusive.",
-                },
-                "objective": {
-                    "type": "string",
-                    "description": "What this casting should accomplish. Max 500 characters.",
-                },
-                "scope": {
-                    "type": "string",
-                    "description": "The bounded domain this casting applies to. Max 200 characters.",
-                },
-                "reversibility": {
-                    "type": "string",
-                    "enum": ["REVERSIBLE", "PARTIAL", "IRREVERSIBLE"],
-                },
-                "side_effect_tolerance": {
-                    "type": "string",
-                    "enum": ["NONE", "LOW", "MEDIUM", "HIGH"],
-                },
-            },
-            "required": [
-                "aspects",
-                "objective",
-                "scope",
-                "reversibility",
-                "side_effect_tolerance",
-            ],
-        },
-    },
-    {
-        "name": "query",
-        "description": "Query the grimoire for CastResults by field filters.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "verdict_filter": {
-                    "type": "string",
-                    "enum": ["COHERENT", "PARTIAL", "INCOHERENT"],
-                    "description": "Optional verdict type filter.",
-                },
-                "min_resonance": {
-                    "type": "number",
-                    "description": "Minimum adjusted resonance score. 0.0 to 1.0.",
-                },
-                "branch_id": {
-                    "type": "string",
-                    "description": "Filter by lineage branch ID.",
-                },
-                "limit": {
-                    "type": "integer",
-                    "description": "Maximum results to return. Default 20, max 100.",
-                },
-            },
-            "required": [],
-        },
-    },
-    {
-        "name": "semantic_search",
-        "description": "Search the grimoire by semantic proximity to a given aspect vector.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "proximity_vector": {
-                    "type": "array",
-                    "items": {"type": "number"},
-                    "description": "Six floats in canonical aspect order: VOID, FORM, MOTION, MIND, DECAY, LIGHT. Each in range -1.0 to 1.0.",
-                },
-                "threshold": {
-                    "type": "number",
-                    "description": "Minimum cosine similarity. 0.0 to 1.0.",
-                },
-                "limit": {
-                    "type": "integer",
-                    "description": "Maximum results to return. Default 20, max 100.",
-                },
-            },
-            "required": ["proximity_vector", "threshold"],
-        },
-    },
-    {
-        "name": "inspect",
-        "description": "Retrieve a single CastResult by cast_id.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "cast_id": {
-                    "type": "string",
-                    "description": "The ULID cast_id of the CastResult to retrieve.",
-                }
-            },
-            "required": ["cast_id"],
-        },
-    },
-    {
-        "name": "seeds",
-        "description": "List GlyphSeeds optionally filtered by crystallized status.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "crystallized": {
-                    "type": "boolean",
-                    "description": "Filter by crystallized status. Omit to return all seeds.",
-                }
-            },
-            "required": [],
-        },
-    },
-]
+TOOL_DISPATCH = {
+    **casting_tools.DISPATCH,
+    **decision_tools.DISPATCH,
+    **observability_tools.DISPATCH,
+    **drift_tools.DISPATCH,
+    **causal_tools.DISPATCH,
+    **genesis_tools.DISPATCH,
+    **program_tools.DISPATCH,
+    **query_tools.DISPATCH,
+    **registry_tools.DISPATCH,
+    **seed_tools.DISPATCH,
+    **swarm_tools.DISPATCH,
+}
 
 
 class VermythMCPServer:
@@ -155,10 +72,15 @@ class VermythMCPServer:
         stderr: TextIO | None = None,
         engine: ResonanceEngine | None = None,
         grimoire: Grimoire | None = None,
+        *,
+        binary_mode: bool = False,
     ) -> None:
         self._in = stdin if stdin is not None else sys.stdin
         self._out = stdout if stdout is not None else sys.stdout
         self._err = stderr if stderr is not None else sys.stderr
+        self._binary_mode = bool(binary_mode)
+        self._bin_in: BinaryIO | None = None
+        self._bin_out: BinaryIO | None = None
         self._running = False
         self._stdin_eof = False
         if engine is not None and grimoire is not None:
@@ -220,6 +142,101 @@ class VermythMCPServer:
             return None
         return parsed
 
+    def _run_binary(self) -> None:
+        self._bin_in = getattr(self._in, "buffer", None) or sys.stdin.buffer
+        self._bin_out = getattr(self._out, "buffer", None) or sys.stdout.buffer
+
+        while self._running:
+            frame = decode_frame_from_buffer(self._bin_in)  # type: ignore[arg-type]
+            if frame is None:
+                break
+            try:
+                payload_obj: Any = json.loads(frame.payload.decode("utf-8"))
+            except Exception:
+                err = {"error": "invalid payload json"}
+                self._bin_out.write(encode_frame(FrameType.ERROR, json.dumps(err).encode("utf-8")))
+                self._bin_out.flush()
+                continue
+
+            if frame.frame_type == FrameType.SESSION_OPEN:
+                ack = {"accepted": True, "transport": "BINARY", "version": 1}
+                self._bin_out.write(encode_frame(FrameType.SESSION_ACK, json.dumps(ack).encode("utf-8")))
+                self._bin_out.flush()
+                continue
+
+            if frame.frame_type == FrameType.SESSION_CLOSE:
+                ack = {"closed": True}
+                self._bin_out.write(encode_frame(FrameType.SESSION_CLOSE, json.dumps(ack).encode("utf-8")))
+                self._bin_out.flush()
+                continue
+
+            if frame.frame_type in (FrameType.GOSSIP_PUSH, FrameType.GOSSIP_PULL):
+                if self._tools is None:
+                    err = {"error": "No engine or grimoire configured."}
+                    self._bin_out.write(encode_frame(FrameType.ERROR, json.dumps(err).encode("utf-8")))
+                    self._bin_out.flush()
+                    continue
+                try:
+                    result = self._tools.tool_gossip_sync(payload_obj)
+                    self._bin_out.write(
+                        encode_frame(FrameType.GOSSIP_ACK, json.dumps(result).encode("utf-8"))
+                    )
+                    self._bin_out.flush()
+                except Exception as exc:
+                    err = {"error": str(exc)}
+                    self._bin_out.write(encode_frame(FrameType.ERROR, json.dumps(err).encode("utf-8")))
+                    self._bin_out.flush()
+                continue
+
+            if frame.frame_type == FrameType.CAUSAL_SYNC:
+                if self._tools is None:
+                    err = {"error": "No engine or grimoire configured."}
+                    self._bin_out.write(encode_frame(FrameType.ERROR, json.dumps(err).encode("utf-8")))
+                    self._bin_out.flush()
+                    continue
+                try:
+                    if (
+                        isinstance(payload_obj, dict)
+                        and "source_cast_id" in payload_obj
+                        and "target_cast_id" in payload_obj
+                    ):
+                        result = self._tools.tool_add_causal_edge(payload_obj)
+                    else:
+                        result = {"accepted": True}
+                    self._bin_out.write(
+                        encode_frame(FrameType.CAUSAL_SYNC, json.dumps(result).encode("utf-8"))
+                    )
+                    self._bin_out.flush()
+                except Exception as exc:
+                    err = {"error": str(exc)}
+                    self._bin_out.write(encode_frame(FrameType.ERROR, json.dumps(err).encode("utf-8")))
+                    self._bin_out.flush()
+                continue
+
+            if frame.frame_type == FrameType.PACKET:
+                if self._tools is None:
+                    err = {"error": "No engine or grimoire configured."}
+                    self._bin_out.write(encode_frame(FrameType.ERROR, json.dumps(err).encode("utf-8")))
+                    self._bin_out.flush()
+                    continue
+                tool = payload_obj.get("tool")
+                args = payload_obj.get("arguments", {})
+                try:
+                    binary_handler = session_tools.BINARY_DISPATCH.get(str(tool))
+                    if binary_handler is not None:
+                        result = binary_handler(self._tools, args)
+                    elif str(tool) in TOOL_DISPATCH:
+                        result = TOOL_DISPATCH[str(tool)](self._tools, args)
+                    else:
+                        raise ValueError(f"unknown tool: {tool}")
+                    self._bin_out.write(encode_frame(FrameType.RESPONSE, json.dumps(result).encode("utf-8")))
+                    self._bin_out.flush()
+                except Exception as exc:
+                    err = {"error": str(exc)}
+                    self._bin_out.write(encode_frame(FrameType.ERROR, json.dumps(err).encode("utf-8")))
+                    self._bin_out.flush()
+                continue
+
     def _handle_initialize(self, message: dict) -> None:
         result = {
             "protocolVersion": PROTOCOL_VERSION,
@@ -249,44 +266,8 @@ class VermythMCPServer:
             return
 
         try:
-            if tool_name == "cast":
-                result = self._tools.tool_cast(
-                    aspects=arguments.get("aspects", []),
-                    intent={
-                        "objective": arguments.get("objective", ""),
-                        "scope": arguments.get("scope", ""),
-                        "reversibility": arguments.get("reversibility", "PARTIAL"),
-                        "side_effect_tolerance": arguments.get(
-                            "side_effect_tolerance", "MEDIUM"
-                        ),
-                    },
-                )
-                self._send(make_success(msg_id, result))
-
-            elif tool_name == "query":
-                result = self._tools.tool_query(arguments)
-                self._send(make_success(msg_id, result))
-
-            elif tool_name == "semantic_search":
-                result = self._tools.tool_semantic_search(
-                    proximity_vector=arguments.get("proximity_vector", []),
-                    threshold=float(arguments.get("threshold", 0.5)),
-                    limit=int(arguments.get("limit", 20)),
-                )
-                self._send(make_success(msg_id, result))
-
-            elif tool_name == "inspect":
-                result = self._tools.tool_inspect(
-                    cast_id=arguments.get("cast_id", "")
-                )
-                self._send(make_success(msg_id, result))
-
-            elif tool_name == "seeds":
-                crystallized = arguments.get("crystallized")
-                result = self._tools.tool_seeds(crystallized=crystallized)
-                self._send(make_success(msg_id, result))
-
-            else:
+            handler = TOOL_DISPATCH.get(str(tool_name))
+            if handler is None:
                 self._send(
                     make_error(
                         msg_id,
@@ -294,6 +275,9 @@ class VermythMCPServer:
                         f"Unknown tool: {tool_name}",
                     )
                 )
+                return
+            result = handler(self._tools, arguments)
+            self._send(make_success(msg_id, result))
 
         except ValueError as e:
             self._send(make_error(msg_id, ERROR_INVALID_PARAMS, str(e)))
@@ -355,6 +339,9 @@ class VermythMCPServer:
         self._running = True
         self._log("Vermyth MCP server starting")
         try:
+            if self._binary_mode:
+                self._run_binary()
+                return
             while self._running:
                 msg = self._read_message()
                 if self._stdin_eof:
@@ -372,27 +359,13 @@ class VermythMCPServer:
 
 
 def main() -> None:
-    import os
-
-    from vermyth.engine.composition import CompositionEngine
-    from vermyth.engine.resonance import ResonanceEngine
-    from vermyth.grimoire.store import Grimoire
-
-    backend_requested = os.environ.get("VERMYTH_BACKEND")
-    backend = None
-    if backend_requested:
-        print(
-            f"[vermyth-mcp] VERMYTH_BACKEND={backend_requested} set but "
-            "dynamic backend loading is not yet implemented. "
-            "Proceeding with PARTIAL projection.",
-            file=sys.stderr,
-        )
-
-    composition = CompositionEngine()
-    grimoire = Grimoire()
-    engine = ResonanceEngine(composition_engine=composition, backend=backend)
-
-    server = VermythMCPServer(engine=engine, grimoire=grimoire)
+    try:
+        grimoire, _composition, engine, _tools = build_tools_from_env(None)
+    except ValueError as exc:
+        print(f"[vermyth-mcp] invalid backend configuration: {exc}", file=sys.stderr)
+        grimoire, _composition, engine, _tools = build_tools(None, backend=NullProjectionBackend())
+    binary_mode = bool(int((os.environ.get("VERMYTH_BINARY_TRANSPORT", "0") or "0")))
+    server = VermythMCPServer(engine=engine, grimoire=grimoire, binary_mode=binary_mode)
     server.run()
 
 

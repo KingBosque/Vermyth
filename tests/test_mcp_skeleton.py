@@ -1,11 +1,6 @@
 import io
 import json
-import sys
 from pathlib import Path
-
-_root = Path(__file__).resolve().parents[1]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 from vermyth.mcp import protocol
 from vermyth.mcp.protocol import (
@@ -114,19 +109,62 @@ def test_handle_initialize_response():
     assert r["capabilities"] == CAPABILITIES
 
 
-def test_handle_tools_list_five_tools():
+def test_handle_tools_list_tools():
     s = _fresh_server()
     s._handle_tools_list({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     s._out.seek(0)
     out = json.loads(s._out.read())
     tools = out["result"]["tools"]
-    assert len(tools) == 5
+    assert len(tools) == 42
     names = [t["name"] for t in tools]
-    assert names == ["cast", "query", "semantic_search", "inspect", "seeds"]
+    assert names == [
+        "decide",
+        "events_tail",
+        "cast",
+        "fluid_cast",
+        "auto_cast",
+        "geometric_cast",
+        "inspect",
+        "lineage",
+        "query",
+        "semantic_search",
+        "crystallized_sigils",
+        "seeds",
+        "register_aspect",
+        "register_sigil",
+        "registered_aspects",
+        "registered_sigils",
+        "channel_status",
+        "divergence",
+        "divergence_reports",
+        "divergence_thresholds",
+        "drift_branches",
+        "lineage_drift",
+        "set_divergence_thresholds",
+        "sync_channel",
+        "gossip_sync",
+        "swarm_cast",
+        "swarm_join",
+        "swarm_status",
+        "compile_program",
+        "execute_program",
+        "execution_status",
+        "list_programs",
+        "program_status",
+        "accept_genesis",
+        "genesis_proposals",
+        "propose_genesis",
+        "reject_genesis",
+        "add_causal_edge",
+        "causal_subgraph",
+        "evaluate_narrative",
+        "infer_causal_edge",
+        "predictive_cast",
+    ]
 
 
 def test_tool_definitions_match_module_constant():
-    assert len(TOOL_DEFINITIONS) == 5
+    assert len(TOOL_DEFINITIONS) == 42
 
 
 def test_handle_tools_call_not_implemented():
@@ -219,6 +257,36 @@ def test_send_writes_json_newline():
         "id": 1,
         "result": {"a": 1},
     }
+
+
+def test_server_run_processes_two_messages_and_stops_on_eof():
+    stdin = io.StringIO(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "initialize",
+                        "params": {
+                            "protocolVersion": PROTOCOL_VERSION,
+                            "clientInfo": {},
+                        },
+                    }
+                ),
+                json.dumps({"jsonrpc": "2.0", "method": "tools/list"}),
+                "",
+            ]
+        )
+    )
+    out = io.StringIO()
+    err = io.StringIO()
+    s = VermythMCPServer(stdin=stdin, stdout=out, stderr=err)
+    s.run()
+    lines = [ln for ln in out.getvalue().splitlines() if ln.strip()]
+    assert len(lines) >= 1
+    first = json.loads(lines[0])
+    assert first["id"] == 1
 
 
 def test_get_id_get_method_get_params():

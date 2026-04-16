@@ -1,0 +1,9 @@
+{
+  "macro_f1_train": 1.0,
+  "macro_f1_holdout": 1.0,
+  "thresholds": {
+    "allow_min_resonance": 0.55,
+    "reshape_min_resonance": 0.3,
+    "max_drift_status": "DRIFTING"
+  }
+}

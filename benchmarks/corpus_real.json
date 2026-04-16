@@ -1,0 +1,327 @@
+[
+  {
+    "id": "real-001",
+    "aspects": [
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Reveal hidden structure",
+      "scope": "analysis",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-001",
+    "source": "real",
+    "disagreement": {
+      "reviewer": "seed",
+      "reason": "placeholder real-label review pending"
+    }
+  },
+  {
+    "id": "real-002",
+    "aspects": [
+      "VOID",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Stabilize long term outcome",
+      "scope": "pipeline",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-002",
+    "source": "real"
+  },
+  {
+    "id": "real-003",
+    "aspects": [
+      "FORM",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Speed up local iteration",
+      "scope": "dev loop",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-003",
+    "source": "real"
+  },
+  {
+    "id": "real-004",
+    "aspects": [
+      "MIND",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Prune stale assumptions",
+      "scope": "reasoning graph",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-004",
+    "source": "real"
+  },
+  {
+    "id": "real-005",
+    "aspects": [
+      "FORM",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Produce explicit documentation",
+      "scope": "team workspace",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-005",
+    "source": "real"
+  },
+  {
+    "id": "real-006",
+    "aspects": [
+      "VOID",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Remove bottlenecks quickly",
+      "scope": "execution path",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-006",
+    "source": "real"
+  },
+  {
+    "id": "real-007",
+    "aspects": [
+      "MOTION",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Find strong signal in noise",
+      "scope": "dataset",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-007",
+    "source": "real"
+  },
+  {
+    "id": "real-008",
+    "aspects": [
+      "FORM",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Constrain unstable behavior",
+      "scope": "runtime",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-008",
+    "source": "real"
+  },
+  {
+    "id": "real-009",
+    "aspects": [
+      "MIND",
+      "FORM"
+    ],
+    "intent": {
+      "objective": "Codify operating model",
+      "scope": "process",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-009",
+    "source": "real"
+  },
+  {
+    "id": "real-010",
+    "aspects": [
+      "VOID",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Eliminate ambiguity",
+      "scope": "decision tree",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-010",
+    "source": "real"
+  },
+  {
+    "id": "real-011",
+    "aspects": [
+      "MOTION",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Break stale local minima",
+      "scope": "optimizer",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-011",
+    "source": "real"
+  },
+  {
+    "id": "real-012",
+    "aspects": [
+      "FORM",
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Align intent and implementation",
+      "scope": "repo",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-012",
+    "source": "real"
+  },
+  {
+    "id": "real-013",
+    "aspects": [
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Reveal hidden structure",
+      "scope": "analysis",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-013",
+    "source": "real"
+  },
+  {
+    "id": "real-014",
+    "aspects": [
+      "VOID",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Stabilize long term outcome",
+      "scope": "pipeline",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-014",
+    "source": "real"
+  },
+  {
+    "id": "real-015",
+    "aspects": [
+      "FORM",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Speed up local iteration",
+      "scope": "dev loop",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-015",
+    "source": "real"
+  },
+  {
+    "id": "real-016",
+    "aspects": [
+      "MIND",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Prune stale assumptions",
+      "scope": "reasoning graph",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-016",
+    "source": "real"
+  },
+  {
+    "id": "real-017",
+    "aspects": [
+      "FORM",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Produce explicit documentation",
+      "scope": "team workspace",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-017",
+    "source": "real"
+  },
+  {
+    "id": "real-018",
+    "aspects": [
+      "VOID",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Remove bottlenecks quickly",
+      "scope": "execution path",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-018",
+    "source": "real"
+  },
+  {
+    "id": "real-019",
+    "aspects": [
+      "MOTION",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Find strong signal in noise",
+      "scope": "dataset",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-019",
+    "source": "real"
+  },
+  {
+    "id": "real-020",
+    "aspects": [
+      "FORM",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Constrain unstable behavior",
+      "scope": "runtime",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "real-020",
+    "source": "real"
+  }
+]

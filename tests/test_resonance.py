@@ -1,13 +1,8 @@
-import sys
 from pathlib import Path
-
-_root = Path(__file__).resolve().parents[1]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 import pytest
 
-from vermyth.contracts import EngineContract, ProjectionBackend
+from vermyth.contracts import EvaluationContract, ProjectionBackend
 from vermyth.engine.composition import CompositionEngine
 from vermyth.engine.resonance import ResonanceEngine, _CASTING_NOTES
 from vermyth.schema import (
@@ -39,13 +34,24 @@ def test_resonance_engine_importable():
 
 
 def test_resonance_engine_subclass_engine_contract():
-    assert issubclass(ResonanceEngine, EngineContract)
+    assert issubclass(ResonanceEngine, EvaluationContract)
 
 
-def test_compose_raises_not_implemented(composition):
+def test_cast_composes_and_evaluates(composition):
     eng = ResonanceEngine(composition)
-    with pytest.raises(NotImplementedError):
-        eng.compose(frozenset({AspectID.FORM}))
+    intent = Intent(
+        objective="o",
+        scope="s",
+        reversibility=ReversibilityClass.REVERSIBLE,
+        side_effect_tolerance=SideEffectTolerance.LOW,
+    )
+    cr = eng.cast(frozenset({AspectID.FORM}), intent)
+    assert cr.sigil.aspects == frozenset({AspectID.FORM})
+    assert cr.verdict.verdict_type in {
+        VerdictType.COHERENT,
+        VerdictType.PARTIAL,
+        VerdictType.INCOHERENT,
+    }
 
 
 def test_casting_notes_has_36_entries():
@@ -93,7 +99,13 @@ def test_evaluate_never_raises(composition):
         side_effect_tolerance=SideEffectTolerance.NONE,
     )
     v = eng.evaluate(sigil, intent)
-    assert v is not None
+    assert v.verdict_type in {
+        VerdictType.COHERENT,
+        VerdictType.PARTIAL,
+        VerdictType.INCOHERENT,
+    }
+    assert 0.0 <= float(v.resonance.raw) <= 1.0
+    assert 0.0 <= float(v.resonance.adjusted) <= 1.0
 
 
 def test_evaluate_intent_vector_present(composition):

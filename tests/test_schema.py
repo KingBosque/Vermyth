@@ -1,12 +1,8 @@
 import hashlib
-import sys
+import math
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-
-_root = Path(__file__).resolve().parents[1]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 import pytest
 from pydantic import ValidationError
@@ -94,6 +90,15 @@ def test_semantic_vector_distance_is_one_minus_cosine():
     b = SemanticVector.from_aspects(frozenset({AspectID.DECAY}))
     cos = a.cosine_similarity(b)
     assert a.distance(b) == pytest.approx(1.0 - cos)
+
+
+def test_semantic_vector_cosine_clamps_to_one_when_floating_error():
+    # Use extremely large/small magnitudes to create floating-point noise.
+    a = SemanticVector(components=(1e308, 0.0, 0.0, 0.0, 0.0, 0.0))
+    b = SemanticVector(components=(1e308, 0.0, 0.0, 0.0, 0.0, 0.0))
+    sim = a.cosine_similarity(b)
+    assert math.isfinite(sim)
+    assert -1.0 <= sim <= 1.0
 
 
 def _fingerprint_for_aspects(aspects: frozenset[AspectID]) -> str:

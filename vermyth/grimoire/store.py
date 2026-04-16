@@ -4,33 +4,78 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import heapq
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
 from vermyth.contracts import GrimoireContract
+from vermyth.engine.keys import canonical_aspect_key
+from vermyth.grimoire.repositories.basis_versions import BasisVersionRepository
+from vermyth.grimoire.repositories.casts import CastRepository
+from vermyth.grimoire.repositories.causal import CausalRepository
+from vermyth.grimoire.repositories.channels import ChannelRepository
+from vermyth.grimoire.repositories.crystallized import CrystallizedRepository
+from vermyth.grimoire.repositories.decisions import DecisionRepository
+from vermyth.grimoire.repositories.divergence import DivergenceRepository
+from vermyth.grimoire.repositories.genesis import GenesisRepository
+from vermyth.grimoire.repositories.programs import ProgramRepository
+from vermyth.grimoire.repositories.registry import RegistryRepository
+from vermyth.grimoire.repositories.seeds import SeedRepository
+from vermyth.grimoire.repositories.sessions import SessionRepository
+from vermyth.grimoire.repositories.swarm import SwarmRepository
+from vermyth.registry import AspectRegistry
 from vermyth.schema import (
-    AspectID,
+    Aspect,
+    BasisVersion,
+    RegisteredAspect,
     CastResult,
+    CastProvenance,
+    CausalEdge,
+    CausalEdgeType,
+    CausalQuery,
+    CausalSubgraph,
+    CanonicalPacketV2,
+    CanonicalResponseV2,
+    ChannelState,
+    ChannelStatus,
     ContradictionSeverity,
+    CrystallizedSigil,
+    DivergenceReport,
+    DivergenceStatus,
+    DivergenceThresholds,
+    DivergenceThresholds_DEFAULT,
+    EmergentAspect,
     EffectClass,
+    GenesisStatus,
+    GossipPayload,
     GlyphSeed,
     Intent,
     IntentVector,
     Lineage,
+    Polarity,
+    PolicyAction,
+    PolicyDecision,
+    PolicyThresholds,
     ProjectionMethod,
+    ProgramExecution,
+    ProgramStatus,
     ResonanceScore,
+    SemanticProgram,
     SemanticQuery,
     SemanticVector,
+    SessionRecord,
+    SessionStatus,
+    SessionTransport,
     Sigil,
+    SwarmState,
+    SwarmStatus,
     Verdict,
     VerdictType,
+    current_basis_version,
 )
-
-
 class Grimoire(GrimoireContract):
     """Persistent cast and seed storage using SQLite."""
-
     def __init__(self, db_path: Path | str | None = None) -> None:
         if db_path is None:
             self._path = Path.home() / ".vermyth" / "grimoire.db"
@@ -43,395 +88,274 @@ class Grimoire(GrimoireContract):
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA foreign_keys=ON")
+        self.casts = CastRepository(self._conn)
+        self.seeds = SeedRepository(self._conn)
+        self.crystallized = CrystallizedRepository(self._conn)
+        self.divergence = DivergenceRepository(self._conn)
+        self.channels = ChannelRepository(self._conn)
+        self.sessions = SessionRepository(self._conn)
+        self.basis_versions = BasisVersionRepository(self._conn)
+        self.registry = RegistryRepository(self._conn)
+        self.genesis = GenesisRepository(self._conn, self.registry)
+        self.causal = CausalRepository(self._conn)
+        self.swarm = SwarmRepository(self._conn)
+        self.programs = ProgramRepository(self._conn)
+        self.decisions = DecisionRepository(self._conn)
         self._run_migrations()
-
     def _run_migrations(self) -> None:
         cur = self._conn.cursor()
         cur.execute(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='schema_migrations'"
         )
         has_migrations = cur.fetchone() is not None
+        applied: set[str] = set()
         if has_migrations:
+            cur.execute("SELECT version FROM schema_migrations")
+            applied = {r["version"] for r in cur.fetchall()}
+
+        migrations = [
+            ("v001", "v001_initial.sql"),
+            ("v002", "v002_crystallized_loop.sql"),
+            ("v003", "v003_extension_api.sql"),
+            ("v004", "v004_divergence_detection.sql"),
+            ("v005", "v005_observability_indexes.sql"),
+            ("v006", "v006_cast_aspect_pattern_key.sql"),
+            ("v007", "v007_channel_states.sql"),
+            ("v008", "v008_sessions.sql"),
+            ("v009", "v009_swarm_federation.sql"),
+            ("v010", "v010_semantic_programs.sql"),
+            ("v011", "v011_emergent_aspects.sql"),
+            ("v012", "v012_causal_graph.sql"),
+            ("v013", "v013_basis_versions.sql"),
+            ("v014", "v014_policy_decisions.sql"),
+            ("v015", "v015_cast_provenance_extend.sql"),
+            ("v016", "v016_policy_decision_model.sql"),
+        ]
+        for version, filename in migrations:
+            if version in applied:
+                continue
+            sql_path = Path(__file__).parent / "migrations" / filename
+            self._conn.executescript(sql_path.read_text(encoding="utf-8"))
             cur.execute(
-                "SELECT 1 FROM schema_migrations WHERE version = ?", ("v001",)
-            )
-            if cur.fetchone() is not None:
-                return
-        sql_path = Path(__file__).parent / "migrations" / "v001_initial.sql"
-        self._conn.executescript(sql_path.read_text(encoding="utf-8"))
-        cur.execute(
-            "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
-            ("v001", datetime.now(timezone.utc).isoformat()),
-        )
-        self._conn.commit()
-
-    def _serialize_cast_result(self, result: CastResult) -> dict[str, Any]:
-        sigil_json = json.dumps(
-            {
-                "name": result.sigil.name,
-                "aspects": [a.name for a in result.sigil.aspects],
-                "effect_class": result.sigil.effect_class.name,
-                "resonance_ceiling": result.sigil.resonance_ceiling,
-                "contradiction_severity": result.sigil.contradiction_severity.name,
-                "semantic_fingerprint": result.sigil.semantic_fingerprint,
-                "semantic_vector": list(result.sigil.semantic_vector.components),
-                "polarity": result.sigil.polarity.name,
-            }
-        )
-        iv = result.verdict.intent_vector
-        verdict_json = json.dumps(
-            {
-                "verdict_type": result.verdict.verdict_type.name,
-                "resonance": {
-                    "raw": result.verdict.resonance.raw,
-                    "adjusted": result.verdict.resonance.adjusted,
-                    "ceiling_applied": result.verdict.resonance.ceiling_applied,
-                    "proof": result.verdict.resonance.proof,
-                },
-                "effect_description": result.verdict.effect_description,
-                "incoherence_reason": result.verdict.incoherence_reason,
-                "casting_note": result.verdict.casting_note,
-                "intent_vector": {
-                    "vector": list(iv.vector.components),
-                    "projection_method": iv.projection_method.name,
-                    "constraint_component": list(iv.constraint_component.components),
-                    "semantic_component": (
-                        list(iv.semantic_component.components)
-                        if iv.semantic_component
-                        else None
-                    ),
-                    "confidence": iv.confidence,
-                },
-            }
-        )
-        return {
-            "cast_id": result.cast_id,
-            "timestamp": result.timestamp.isoformat(),
-            "intent_json": result.intent.model_dump_json(),
-            "sigil_json": sigil_json,
-            "verdict_json": verdict_json,
-            "lineage_json": (
-                result.lineage.model_dump_json()
-                if result.lineage is not None
-                else None
-            ),
-            "glyph_seed_id": result.glyph_seed_id,
-            "semantic_vector_json": json.dumps(
-                list(result.sigil.semantic_vector.components)
-            ),
-            "verdict_type": result.verdict.verdict_type.name,
-            "effect_class": result.sigil.effect_class.name,
-            "adjusted_resonance": result.verdict.resonance.adjusted,
-            "branch_id": (
-                result.lineage.branch_id if result.lineage is not None else None
-            ),
-        }
-
-    def _deserialize_cast_result(self, row: sqlite3.Row) -> CastResult:
-        """Reconstruct CastResult from a DB row.
-
-        Uses ``CastResult.model_construct`` so ``cast_id`` and ``timestamp`` can
-        be restored from storage; the normal constructor rejects caller-supplied
-        values for those fields.
-        """
-        intent = Intent.model_validate_json(row["intent_json"])
-        sigil_d = json.loads(row["sigil_json"])
-        aspects = frozenset(AspectID[n] for n in sigil_d["aspects"])
-        sigil = Sigil.model_validate(
-            {
-                "name": sigil_d["name"],
-                "aspects": aspects,
-                "effect_class": EffectClass[sigil_d["effect_class"]],
-                "resonance_ceiling": sigil_d["resonance_ceiling"],
-                "contradiction_severity": ContradictionSeverity[
-                    sigil_d["contradiction_severity"]
-                ],
-            }
-        )
-        vj = json.loads(row["verdict_json"])
-        res = vj["resonance"]
-        resonance = ResonanceScore(
-            raw=res["raw"],
-            adjusted=res["adjusted"],
-            ceiling_applied=res["ceiling_applied"],
-            proof=res["proof"],
-        )
-        iv_raw = vj["intent_vector"]
-        vec = SemanticVector(
-            components=tuple(float(x) for x in iv_raw["vector"])
-        )
-        cc = SemanticVector(
-            components=tuple(float(x) for x in iv_raw["constraint_component"])
-        )
-        sc: SemanticVector | None = None
-        if iv_raw["semantic_component"] is not None:
-            sc = SemanticVector(
-                components=tuple(float(x) for x in iv_raw["semantic_component"])
-            )
-        intent_vector = IntentVector(
-            vector=vec,
-            projection_method=ProjectionMethod[iv_raw["projection_method"]],
-            constraint_component=cc,
-            semantic_component=sc,
-            confidence=iv_raw["confidence"],
-        )
-        verdict = Verdict(
-            verdict_type=VerdictType[vj["verdict_type"]],
-            resonance=resonance,
-            effect_description=vj["effect_description"],
-            incoherence_reason=vj["incoherence_reason"],
-            casting_note=vj["casting_note"],
-            intent_vector=intent_vector,
-        )
-        lineage: Lineage | None = None
-        lj = row["lineage_json"]
-        if lj is not None:
-            lineage = Lineage.model_validate_json(lj)
-        ts = datetime.fromisoformat(row["timestamp"])
-        return CastResult.model_construct(
-            cast_id=row["cast_id"],
-            timestamp=ts,
-            intent=intent,
-            sigil=sigil,
-            verdict=verdict,
-            immutable=True,
-            lineage=lineage,
-            glyph_seed_id=row["glyph_seed_id"],
-        )
-
-    def _serialize_glyph_seed(self, seed: GlyphSeed) -> dict[str, Any]:
-        cand = (
-            seed.candidate_effect_class.name
-            if seed.candidate_effect_class is not None
-            else None
-        )
-        return {
-            "seed_id": seed.seed_id,
-            "aspect_pattern_json": json.dumps([a.name for a in seed.aspect_pattern]),
-            "observed_count": seed.observed_count,
-            "mean_resonance": seed.mean_resonance,
-            "coherence_rate": seed.coherence_rate,
-            "candidate_effect_class": cand,
-            "crystallized": 1 if seed.crystallized else 0,
-            "semantic_vector_json": json.dumps(
-                list(seed.semantic_vector.components)
-            ),
-        }
-
-    def _deserialize_glyph_seed(self, row: sqlite3.Row) -> GlyphSeed:
-        """Reconstruct GlyphSeed from a DB row.
-
-        Uses ``GlyphSeed.model_construct`` with an explicit ``seed_id`` so stored
-        seeds round-trip; the normal constructor forbids supplying ``seed_id``.
-        """
-        names = json.loads(row["aspect_pattern_json"])
-        pattern = frozenset(AspectID[n] for n in names)
-        comps = json.loads(row["semantic_vector_json"])
-        sv = SemanticVector(components=tuple(float(x) for x in comps))
-        cand_raw = row["candidate_effect_class"]
-        cand: EffectClass | None = (
-            EffectClass[cand_raw] if cand_raw is not None else None
-        )
-        return GlyphSeed.model_construct(
-            seed_id=row["seed_id"],
-            aspect_pattern=pattern,
-            observed_count=int(row["observed_count"]),
-            mean_resonance=float(row["mean_resonance"]),
-            coherence_rate=float(row["coherence_rate"]),
-            candidate_effect_class=cand,
-            crystallized=bool(row["crystallized"]),
-            semantic_vector=sv,
-        )
-
-    def write(self, result: CastResult) -> None:
-        try:
-            cur = self._conn.cursor()
-            cur.execute(
-                "SELECT 1 FROM cast_results WHERE cast_id = ?",
-                (result.cast_id,),
-            )
-            if cur.fetchone() is not None:
-                raise ValueError(
-                    f"CastResult with cast_id {result.cast_id!r} already exists"
-                )
-            d = self._serialize_cast_result(result)
-            cur.execute(
-                """
-                INSERT INTO cast_results (
-                    cast_id, timestamp, intent_json, sigil_json, verdict_json,
-                    lineage_json, glyph_seed_id, semantic_vector_json,
-                    verdict_type, effect_class, adjusted_resonance, branch_id
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    d["cast_id"],
-                    d["timestamp"],
-                    d["intent_json"],
-                    d["sigil_json"],
-                    d["verdict_json"],
-                    d["lineage_json"],
-                    d["glyph_seed_id"],
-                    d["semantic_vector_json"],
-                    d["verdict_type"],
-                    d["effect_class"],
-                    d["adjusted_resonance"],
-                    d["branch_id"],
-                ),
+                "INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?)",
+                (version, datetime.now(timezone.utc).isoformat()),
             )
             self._conn.commit()
-        except ValueError:
-            raise
-        except sqlite3.Error as exc:
-            raise RuntimeError(str(exc)) from exc
-
-    def read(self, cast_id: str) -> CastResult:
+        self._backfill_cast_aspect_pattern_keys()
+        latest_basis = self.read_latest_basis_version()
+        AspectRegistry.get().set_basis_version(latest_basis.version)
+    def _backfill_cast_aspect_pattern_keys(self) -> None:
         try:
             cur = self._conn.cursor()
-            cur.execute("SELECT * FROM cast_results WHERE cast_id = ?", (cast_id,))
-            row = cur.fetchone()
-            if row is None:
-                raise KeyError(cast_id)
-            return self._deserialize_cast_result(row)
-        except KeyError:
-            raise
-        except sqlite3.Error as exc:
-            raise RuntimeError(str(exc)) from exc
-
-    def query(self, query: SemanticQuery) -> list[CastResult]:
-        try:
-            parts: list[str] = []
-            params: list[Any] = []
-            if query.verdict_filter is not None:
-                parts.append("verdict_type = ?")
-                params.append(query.verdict_filter.name)
-            if query.effect_class_filter is not None:
-                parts.append("effect_class = ?")
-                params.append(query.effect_class_filter.name)
-            if query.min_resonance is not None:
-                parts.append("adjusted_resonance >= ?")
-                params.append(query.min_resonance)
-            if query.branch_id is not None:
-                parts.append("branch_id = ?")
-                params.append(query.branch_id)
-            where = (" WHERE " + " AND ".join(parts)) if parts else ""
-            sql = (
-                "SELECT * FROM cast_results"
-                + where
-                + " ORDER BY timestamp DESC"
+            cur.execute(
+                "SELECT cast_id, sigil_json FROM cast_results WHERE aspect_pattern_key IS NULL"
             )
-            cur = self._conn.cursor()
-            cur.execute(sql, params)
             rows = cur.fetchall()
-            out: list[CastResult] = []
+            if not rows:
+                return
+            updates: list[tuple[str, str]] = []
             for row in rows:
-                cr = self._deserialize_cast_result(row)
-                if query.aspect_filter is not None:
-                    if cr.sigil.aspects != query.aspect_filter:
-                        continue
-                out.append(cr)
-                if len(out) >= query.limit:
-                    break
-            return out
-        except sqlite3.Error as exc:
-            raise RuntimeError(str(exc)) from exc
-
-    def semantic_search(self, query: SemanticQuery) -> list[CastResult]:
-        if query.proximity_to is None or query.proximity_threshold is None:
-            raise ValueError("proximity_to and proximity_threshold are required")
-        try:
-            cur = self._conn.cursor()
-            cur.execute(
-                "SELECT cast_id, semantic_vector_json FROM cast_results"
-            )
-            scored: list[tuple[float, str]] = []
-            for row in cur.fetchall():
-                comps = json.loads(row["semantic_vector_json"])
-                sv = SemanticVector(
-                    components=tuple(float(x) for x in comps)
+                sigil_d = json.loads(row["sigil_json"])
+                aspects = frozenset(
+                    AspectRegistry.get().resolve(n) for n in sigil_d["aspects"]
                 )
-                sim = query.proximity_to.cosine_similarity(sv)
-                if sim >= query.proximity_threshold:
-                    scored.append((sim, row["cast_id"]))
-            scored.sort(key=lambda t: -t[0])
-            ids = [cid for _, cid in scored[: query.limit]]
-            return [self.read(cid) for cid in ids]
-        except KeyError:
-            raise
-        except sqlite3.Error as exc:
-            raise RuntimeError(str(exc)) from exc
-
-    def write_seed(self, seed: GlyphSeed) -> None:
-        try:
-            d = self._serialize_glyph_seed(seed)
-            cur = self._conn.cursor()
-            cur.execute(
-                """
-                INSERT OR REPLACE INTO glyph_seeds (
-                    seed_id, aspect_pattern_json, observed_count, mean_resonance,
-                    coherence_rate, candidate_effect_class, crystallized,
-                    semantic_vector_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    d["seed_id"],
-                    d["aspect_pattern_json"],
-                    d["observed_count"],
-                    d["mean_resonance"],
-                    d["coherence_rate"],
-                    d["candidate_effect_class"],
-                    d["crystallized"],
-                    d["semantic_vector_json"],
-                ),
+                updates.append((canonical_aspect_key(aspects), row["cast_id"]))
+            cur.executemany(
+                "UPDATE cast_results SET aspect_pattern_key = ? WHERE cast_id = ?",
+                updates,
             )
             self._conn.commit()
         except sqlite3.Error as exc:
             raise RuntimeError(str(exc)) from exc
-
+    def write_basis_version(self, basis: BasisVersion) -> None:
+        self.basis_versions.write_basis_version(basis)
+    def read_basis_version(self, version: int) -> BasisVersion:
+        return self.basis_versions.read_basis_version(version)
+    def read_latest_basis_version(self) -> BasisVersion:
+        return self.basis_versions.read_latest_basis_version()
+    def write(self, result: CastResult) -> None:
+        self.casts.write(result)
+    def read(self, cast_id: str) -> CastResult:
+        return self.casts.read(cast_id)
+    def query(self, query: SemanticQuery) -> list[CastResult]:
+        return self.casts.query(query)
+    def semantic_search(self, query: SemanticQuery) -> list[CastResult]:
+        return self.casts.semantic_search(query)
+    def write_seed(self, seed: GlyphSeed) -> None:
+        self.seeds.write_seed(seed)
+    def write_crystallized_sigil(self, crystal: CrystallizedSigil) -> None:
+        self.crystallized.write_crystallized_sigil(crystal)
+    def read_crystallized_sigil(self, name: str) -> CrystallizedSigil:
+        return self.crystallized.read_crystallized_sigil(name)
+    def crystallized_for_aspects(
+        self, aspects: frozenset[Aspect]
+    ) -> CrystallizedSigil | None:
+        return self.crystallized.crystallized_for_aspects(aspects)
+    def query_crystallized_sigils(self) -> list[CrystallizedSigil]:
+        return self.crystallized.query_crystallized_sigils()
     def read_seed(self, seed_id: str) -> GlyphSeed:
-        try:
-            cur = self._conn.cursor()
-            cur.execute("SELECT * FROM glyph_seeds WHERE seed_id = ?", (seed_id,))
-            row = cur.fetchone()
-            if row is None:
-                raise KeyError(seed_id)
-            return self._deserialize_glyph_seed(row)
-        except KeyError:
-            raise
-        except sqlite3.Error as exc:
-            raise RuntimeError(str(exc)) from exc
-
+        return self.seeds.read_seed(seed_id)
     def query_seeds(
         self,
-        aspect_pattern: Optional[frozenset[AspectID]],
+        aspect_pattern: Optional[frozenset[Aspect]],
         crystallized: Optional[bool],
     ) -> list[GlyphSeed]:
-        try:
-            cur = self._conn.cursor()
-            cur.execute("SELECT * FROM glyph_seeds")
-            seeds = [self._deserialize_glyph_seed(r) for r in cur.fetchall()]
-            out: list[GlyphSeed] = []
-            for s in seeds:
-                if aspect_pattern is not None and s.aspect_pattern != aspect_pattern:
-                    continue
-                if crystallized is not None and s.crystallized != crystallized:
-                    continue
-                out.append(s)
-            return out
-        except sqlite3.Error as exc:
-            raise RuntimeError(str(exc)) from exc
-
+        return self.seeds.query_seeds(aspect_pattern=aspect_pattern, crystallized=crystallized)
+    def write_registered_aspect(self, aspect: RegisteredAspect, ordinal: int) -> None:
+        self.registry.write_registered_aspect(aspect, ordinal)
+    def query_registered_aspects(self) -> list[tuple[RegisteredAspect, int]]:
+        return self.registry.query_registered_aspects()
+    def write_registered_sigil(
+        self,
+        name: str,
+        aspects: list[str],
+        effect_class: str,
+        resonance_ceiling: float,
+        contradiction_severity: str,
+        is_override: bool,
+    ) -> None:
+        self.registry.write_registered_sigil(
+            name=name,
+            aspects=aspects,
+            effect_class=effect_class,
+            resonance_ceiling=resonance_ceiling,
+            contradiction_severity=contradiction_severity,
+            is_override=is_override,
+        )
+    def read_registered_sigil(self, name: str) -> dict:
+        return self.registry.read_registered_sigil(name)
+    def query_registered_sigils(self) -> list[dict]:
+        return self.registry.query_registered_sigils()
+    def write_divergence_report(self, report: DivergenceReport) -> None:
+        self.divergence.write_divergence_report(report)
+    def read_divergence_report(self, cast_id: str) -> DivergenceReport:
+        return self.divergence.read_divergence_report(cast_id)
+    def query_divergence_reports(
+        self,
+        status: DivergenceStatus | None = None,
+        limit: int = 50,
+        *,
+        since: datetime | None = None,
+    ) -> list[DivergenceReport]:
+        return self.divergence.query_divergence_reports(
+            status=status,
+            limit=limit,
+            since=since,
+        )
+    def write_divergence_thresholds(self, thresholds: DivergenceThresholds) -> None:
+        self.divergence.write_divergence_thresholds(thresholds)
+    def read_divergence_thresholds(self) -> DivergenceThresholds:
+        return self.divergence.read_divergence_thresholds()
+    def drift_branches(self, limit: int = 25) -> list[dict[str, Any]]:
+        return self.divergence.drift_branches(limit=limit)
+    def cast_pairs_missing_divergence_reports(self, limit: int = 500) -> list[tuple[str, str]]:
+        return self.divergence.cast_pairs_missing_divergence_reports(limit=limit)
+    def write_channel_state(self, state: ChannelState) -> None:
+        self.channels.write_channel_state(state)
+    def read_channel_state(self, branch_id: str) -> ChannelState:
+        return self.channels.read_channel_state(branch_id)
+    def query_channel_states(self, status: Optional[str], limit: int) -> list[ChannelState]:
+        return self.channels.query_channel_states(status=status, limit=limit)
+    def write_session(self, session: SessionRecord) -> None:
+        self.sessions.write_session(session)
+    def read_session(self, session_id: str) -> SessionRecord:
+        return self.sessions.read_session(session_id)
+    def close_session(self, session_id: str) -> SessionRecord:
+        return self.sessions.close_session(session_id)
+    def advance_session_sequence(self, session_id: str, new_sequence: int) -> SessionRecord:
+        return self.sessions.advance_session_sequence(session_id, new_sequence)
+    def write_session_packet(self, packet: CanonicalPacketV2) -> None:
+        self.sessions.write_session_packet(packet)
+    def write_session_response(self, response: CanonicalResponseV2) -> None:
+        self.sessions.write_session_response(response)
+    def query_session_packets(self, session_id: str, limit: int) -> list[CanonicalPacketV2]:
+        return self.sessions.query_session_packets(session_id, limit)
+    def query_session_responses(self, session_id: str, limit: int) -> list[CanonicalResponseV2]:
+        return self.sessions.query_session_responses(session_id, limit)
+    def write_swarm_state(self, state: SwarmState) -> None:
+        self.swarm.write_swarm_state(state)
+    def read_swarm_state(self, swarm_id: str) -> SwarmState:
+        return self.swarm.read_swarm_state(swarm_id)
+    def upsert_swarm_member(
+        self,
+        swarm_id: str,
+        session_id: str,
+        vector: SemanticVector,
+        coherence_streak: int,
+    ) -> None:
+        self.swarm.upsert_swarm_member(
+            swarm_id=swarm_id,
+            session_id=session_id,
+            vector=vector,
+            coherence_streak=coherence_streak,
+        )
+    def query_swarm_members(self, swarm_id: str) -> list[tuple[str, SemanticVector, int]]:
+        return self.swarm.query_swarm_members(swarm_id)
+    def write_program(self, program: SemanticProgram) -> None:
+        self.programs.write_program(program)
+    def read_program(self, program_id: str) -> SemanticProgram:
+        return self.programs.read_program(program_id)
+    def query_programs(self, limit: int = 50) -> list[SemanticProgram]:
+        return self.programs.query_programs(limit=limit)
+    def write_execution(self, execution: ProgramExecution) -> None:
+        self.programs.write_execution(execution)
+    def read_execution(self, execution_id: str) -> ProgramExecution:
+        return self.programs.read_execution(execution_id)
+    def query_executions(self, program_id: str, limit: int = 50) -> list[ProgramExecution]:
+        return self.programs.query_executions(program_id=program_id, limit=limit)
+    def write_emergent_aspect(self, aspect: EmergentAspect) -> None:
+        self.genesis.write_emergent_aspect(aspect)
+    def read_emergent_aspect(self, genesis_id: str) -> EmergentAspect:
+        return self.genesis.read_emergent_aspect(genesis_id)
+    def query_emergent_aspects(
+        self, status: str | None = None, limit: int = 50
+    ) -> list[EmergentAspect]:
+        return self.genesis.query_emergent_aspects(status=status, limit=limit)
+    def accept_emergent_aspect(self, genesis_id: str) -> EmergentAspect:
+        return self.genesis.accept_emergent_aspect(genesis_id)
+    def reject_emergent_aspect(self, genesis_id: str) -> EmergentAspect:
+        return self.genesis.reject_emergent_aspect(genesis_id)
+    def write_causal_edge(self, edge: CausalEdge) -> None:
+        self.causal.write_causal_edge(edge)
+    def read_causal_edge(self, edge_id: str) -> CausalEdge:
+        return self.causal.read_causal_edge(edge_id)
+    def query_causal_edges(
+        self,
+        cast_id: str | None = None,
+        edge_types: list[str] | None = None,
+        min_weight: float = 0.0,
+        limit: int = 100,
+    ) -> list[CausalEdge]:
+        return self.causal.query_causal_edges(
+            cast_id=cast_id,
+            edge_types=edge_types,
+            min_weight=min_weight,
+            limit=limit,
+        )
+    def causal_subgraph(self, query: CausalQuery) -> CausalSubgraph:
+        return self.causal.causal_subgraph(query)
+    def delete_causal_edge(self, edge_id: str) -> None:
+        self.causal.delete_causal_edge(edge_id)
+    def apply_gossip_sync(self, payload: GossipPayload) -> dict[str, Any]:
+        return self.swarm.apply_gossip_sync(payload, self)
+    def write_policy_decision(self, decision: PolicyDecision) -> None:
+        self.decisions.write_policy_decision(decision)
+    def read_policy_decision(self, decision_id: str) -> PolicyDecision:
+        return self.decisions.read_policy_decision(decision_id)
+    def query_policy_decisions(
+        self,
+        action: PolicyAction | None = None,
+        *,
+        since: datetime | None = None,
+        limit: int = 50,
+    ) -> list[PolicyDecision]:
+        return self.decisions.query_policy_decisions(
+            action=action,
+            since=since,
+            limit=limit,
+        )
     def delete(self, cast_id: str) -> None:
-        try:
-            cur = self._conn.cursor()
-            cur.execute("DELETE FROM cast_results WHERE cast_id = ?", (cast_id,))
-            if cur.rowcount == 0:
-                raise KeyError(cast_id)
-            self._conn.commit()
-        except KeyError:
-            raise
-        except sqlite3.Error as exc:
-            raise RuntimeError(str(exc)) from exc
-
+        self.casts.delete(cast_id)
     def close(self) -> None:
         """Close the underlying SQLite connection. Call when the Grimoire is no longer needed."""
         self._conn.close()

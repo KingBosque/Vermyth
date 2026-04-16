@@ -1,17 +1,13 @@
 import inspect
-import sys
-from pathlib import Path
-
-_root = Path(__file__).resolve().parents[1]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
 
 import pytest
 
 import vermyth.contracts as contracts
 from vermyth.contracts import (
     CLIContract,
+    CompositionContract,
     EngineContract,
+    EvaluationContract,
     ExtensionContract,
     GrimoireContract,
     MCPServerContract,
@@ -32,6 +28,8 @@ def _abstract_callables(cls: type) -> dict[str, object]:
 
 def test_all_contract_classes_importable():
     for name in (
+        "CompositionContract",
+        "EvaluationContract",
         "EngineContract",
         "GrimoireContract",
         "MCPServerContract",
@@ -44,6 +42,8 @@ def test_all_contract_classes_importable():
 @pytest.mark.parametrize(
     "cls",
     [
+        CompositionContract,
+        EvaluationContract,
         EngineContract,
         GrimoireContract,
         MCPServerContract,
@@ -59,7 +59,28 @@ def test_contract_cannot_instantiate(cls):
 def test_engine_contract_abstract_methods():
     names = frozenset(_abstract_callables(EngineContract))
     assert names == frozenset(
-        {"compose", "evaluate", "cast", "accumulate", "crystallize"}
+        {
+            "compose",
+            "register_sigil_entry",
+            "load_registered_sigils",
+            "interpolate",
+            "evaluate",
+            "cast",
+            "accumulate",
+            "crystallize",
+            "fluid_cast",
+            "chained_cast",
+            "sync_channel",
+            "auto_cast",
+            "swarm_cast",
+            "compile_program",
+            "execute_program",
+            "propose_genesis",
+            "infer_causal_edge",
+            "evaluate_narrative",
+            "predictive_cast",
+            "decide",
+        }
     )
 
 
@@ -74,6 +95,58 @@ def test_grimoire_contract_abstract_methods():
             "write_seed",
             "read_seed",
             "query_seeds",
+            "write_crystallized_sigil",
+            "read_crystallized_sigil",
+            "crystallized_for_aspects",
+            "query_crystallized_sigils",
+            "write_channel_state",
+            "read_channel_state",
+            "query_channel_states",
+            "write_session",
+            "read_session",
+            "close_session",
+            "advance_session_sequence",
+            "write_session_packet",
+            "write_session_response",
+            "query_session_packets",
+            "query_session_responses",
+            "write_registered_aspect",
+            "query_registered_aspects",
+            "write_basis_version",
+            "read_basis_version",
+            "read_latest_basis_version",
+            "write_registered_sigil",
+            "read_registered_sigil",
+            "query_registered_sigils",
+            "write_divergence_report",
+            "read_divergence_report",
+            "query_divergence_reports",
+            "write_divergence_thresholds",
+            "read_divergence_thresholds",
+            "write_swarm_state",
+            "read_swarm_state",
+            "upsert_swarm_member",
+            "query_swarm_members",
+            "apply_gossip_sync",
+            "write_program",
+            "read_program",
+            "query_programs",
+            "write_execution",
+            "read_execution",
+            "query_executions",
+            "write_emergent_aspect",
+            "read_emergent_aspect",
+            "query_emergent_aspects",
+            "accept_emergent_aspect",
+            "reject_emergent_aspect",
+            "write_causal_edge",
+            "read_causal_edge",
+            "query_causal_edges",
+            "causal_subgraph",
+            "delete_causal_edge",
+            "write_policy_decision",
+            "read_policy_decision",
+            "query_policy_decisions",
             "delete",
         }
     )
@@ -83,11 +156,20 @@ def test_mcp_server_contract_abstract_methods():
     names = frozenset(_abstract_callables(MCPServerContract))
     assert names == frozenset(
         {
+            "tool_decide",
             "tool_cast",
             "tool_query",
             "tool_semantic_search",
             "tool_inspect",
             "tool_seeds",
+            "tool_crystallized_sigils",
+            "tool_register_aspect",
+            "tool_register_sigil",
+            "tool_registered_aspects",
+            "tool_registered_sigils",
+            "tool_divergence",
+            "tool_set_divergence_thresholds",
+            "tool_divergence_thresholds",
         }
     )
 
@@ -96,11 +178,20 @@ def test_cli_contract_abstract_methods():
     names = frozenset(_abstract_callables(CLIContract))
     assert names == frozenset(
         {
+            "cmd_decide",
             "cmd_cast",
             "cmd_query",
             "cmd_search",
             "cmd_inspect",
             "cmd_seeds",
+            "cmd_crystallized_sigils",
+            "cmd_register_aspect",
+            "cmd_register_sigil",
+            "cmd_aspects",
+            "cmd_registered_sigils",
+            "cmd_divergence",
+            "cmd_set_thresholds",
+            "cmd_thresholds",
         }
     )
 
@@ -179,11 +270,11 @@ def test_projection_backend_concrete_six_zeros():
 
 def test_projection_backend_fewer_than_six_floats_is_detectable():
     assert "ValueError" in (ProjectionBackend.project.__doc__ or "")
-    assert "six" in (ProjectionBackend.project.__doc__ or "").lower()
+    assert "at least 6" in (ProjectionBackend.project.__doc__ or "").lower()
 
     class ShortBackend(ProjectionBackend):
         def project(self, objective: str, scope: str) -> list[float]:
             return [0.0, 0.0, 0.0, 0.0, 0.0]
 
     out = ShortBackend().project("o", "s")
-    assert len(out) != 6
+    assert len(out) < 6

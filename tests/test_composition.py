@@ -1,15 +1,10 @@
 import json
-import sys
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
-_root = Path(__file__).resolve().parents[1]
-if str(_root) not in sys.path:
-    sys.path.insert(0, str(_root))
-
-from vermyth.contracts import EngineContract
+from vermyth.contracts import CompositionContract
 from vermyth.engine.composition import CompositionEngine
 from vermyth.schema import ASPECT_CANONICAL_ORDER, AspectID, SemanticVector
 
@@ -41,7 +36,7 @@ def test_composition_engine_importable():
 
 
 def test_composition_engine_subclass_of_engine_contract():
-    assert issubclass(CompositionEngine, EngineContract)
+    assert issubclass(CompositionEngine, CompositionContract)
 
 
 @pytest.mark.parametrize(
@@ -155,58 +150,18 @@ def test_all_canonical_combinations_resolve(aspects):
     eng.compose(aspects)
 
 
-def test_unimplemented_engine_methods_raise():
+def test_composition_engine_exposes_override_hooks():
     eng = CompositionEngine()
-    from vermyth.schema import (
-        CastResult,
-        GlyphSeed,
-        Intent,
-        IntentVector,
-        ProjectionMethod,
-        ReversibilityClass,
-        SideEffectTolerance,
-        Sigil,
-        Verdict,
-        VerdictType,
-        ResonanceScore,
-        SemanticVector,
+    eng.register_sigil_entry(
+        frozenset({AspectID.MIND}),
+        {
+            "name": "OverrideMind",
+            "aspects": ["MIND"],
+            "effect_class": "COGNITION",
+            "resonance_ceiling": 0.9,
+            "contradiction_severity": "NONE",
+        },
+        allow_override=True,
     )
-
-    sigil = eng.compose(frozenset({AspectID.FORM}))
-    intent = Intent(
-        objective="o",
-        scope="s",
-        reversibility=ReversibilityClass.REVERSIBLE,
-        side_effect_tolerance=SideEffectTolerance.LOW,
-    )
-    with pytest.raises(NotImplementedError):
-        eng.evaluate(sigil, intent)
-    with pytest.raises(NotImplementedError):
-        eng.cast(frozenset({AspectID.FORM}), intent)
-
-    zvec = SemanticVector(components=(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
-    v = Verdict(
-        verdict_type=VerdictType.COHERENT,
-        resonance=ResonanceScore(
-            raw=0.5,
-            adjusted=0.5,
-            ceiling_applied=False,
-            proof="p",
-        ),
-        effect_description="d",
-        incoherence_reason=None,
-        casting_note="n",
-        intent_vector=IntentVector(
-            vector=zvec,
-            projection_method=ProjectionMethod.FULL,
-            constraint_component=zvec,
-            semantic_component=zvec,
-            confidence=1.0,
-        ),
-    )
-    cr = CastResult(intent=intent, sigil=sigil, verdict=v)
-    with pytest.raises(NotImplementedError):
-        eng.accumulate(cr, [])
-    seed = GlyphSeed(aspect_pattern=frozenset({AspectID.FORM}))
-    with pytest.raises(NotImplementedError):
-        eng.crystallize(seed)
+    s = eng.compose(frozenset({AspectID.MIND}))
+    assert s.name == "OverrideMind"

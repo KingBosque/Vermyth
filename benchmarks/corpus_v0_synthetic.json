@@ -1,0 +1,967 @@
+[
+  {
+    "id": "s001",
+    "aspects": [
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Reveal hidden structure",
+      "scope": "analysis",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s001",
+    "source": "synthetic"
+  },
+  {
+    "id": "s002",
+    "aspects": [
+      "VOID",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Stabilize long term outcome",
+      "scope": "pipeline",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s002",
+    "source": "synthetic"
+  },
+  {
+    "id": "s003",
+    "aspects": [
+      "FORM",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Speed up local iteration",
+      "scope": "dev loop",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s003",
+    "source": "synthetic"
+  },
+  {
+    "id": "s004",
+    "aspects": [
+      "MIND",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Prune stale assumptions",
+      "scope": "reasoning graph",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s004",
+    "source": "synthetic"
+  },
+  {
+    "id": "s005",
+    "aspects": [
+      "FORM",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Produce explicit documentation",
+      "scope": "team workspace",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s005",
+    "source": "synthetic"
+  },
+  {
+    "id": "s006",
+    "aspects": [
+      "VOID",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Remove bottlenecks quickly",
+      "scope": "execution path",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s006",
+    "source": "synthetic"
+  },
+  {
+    "id": "s007",
+    "aspects": [
+      "MOTION",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Find strong signal in noise",
+      "scope": "dataset",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s007",
+    "source": "synthetic"
+  },
+  {
+    "id": "s008",
+    "aspects": [
+      "FORM",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Constrain unstable behavior",
+      "scope": "runtime",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s008",
+    "source": "synthetic"
+  },
+  {
+    "id": "s009",
+    "aspects": [
+      "MIND",
+      "FORM"
+    ],
+    "intent": {
+      "objective": "Codify operating model",
+      "scope": "process",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s009",
+    "source": "synthetic"
+  },
+  {
+    "id": "s010",
+    "aspects": [
+      "VOID",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Eliminate ambiguity",
+      "scope": "decision tree",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s010",
+    "source": "synthetic"
+  },
+  {
+    "id": "s011",
+    "aspects": [
+      "MOTION",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Break stale local minima",
+      "scope": "optimizer",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s011",
+    "source": "synthetic"
+  },
+  {
+    "id": "s012",
+    "aspects": [
+      "FORM",
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Align intent and implementation",
+      "scope": "repo",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s012",
+    "source": "synthetic"
+  },
+  {
+    "id": "s013",
+    "aspects": [
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Reveal hidden structure",
+      "scope": "analysis",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s013",
+    "source": "synthetic"
+  },
+  {
+    "id": "s014",
+    "aspects": [
+      "VOID",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Stabilize long term outcome",
+      "scope": "pipeline",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s014",
+    "source": "synthetic"
+  },
+  {
+    "id": "s015",
+    "aspects": [
+      "FORM",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Speed up local iteration",
+      "scope": "dev loop",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s015",
+    "source": "synthetic"
+  },
+  {
+    "id": "s016",
+    "aspects": [
+      "MIND",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Prune stale assumptions",
+      "scope": "reasoning graph",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s016",
+    "source": "synthetic"
+  },
+  {
+    "id": "s017",
+    "aspects": [
+      "FORM",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Produce explicit documentation",
+      "scope": "team workspace",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s017",
+    "source": "synthetic"
+  },
+  {
+    "id": "s018",
+    "aspects": [
+      "VOID",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Remove bottlenecks quickly",
+      "scope": "execution path",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s018",
+    "source": "synthetic"
+  },
+  {
+    "id": "s019",
+    "aspects": [
+      "MOTION",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Find strong signal in noise",
+      "scope": "dataset",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s019",
+    "source": "synthetic"
+  },
+  {
+    "id": "s020",
+    "aspects": [
+      "FORM",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Constrain unstable behavior",
+      "scope": "runtime",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s020",
+    "source": "synthetic"
+  },
+  {
+    "id": "s021",
+    "aspects": [
+      "MIND",
+      "FORM"
+    ],
+    "intent": {
+      "objective": "Codify operating model",
+      "scope": "process",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s021",
+    "source": "synthetic"
+  },
+  {
+    "id": "s022",
+    "aspects": [
+      "VOID",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Eliminate ambiguity",
+      "scope": "decision tree",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s022",
+    "source": "synthetic"
+  },
+  {
+    "id": "s023",
+    "aspects": [
+      "MOTION",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Break stale local minima",
+      "scope": "optimizer",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s023",
+    "source": "synthetic"
+  },
+  {
+    "id": "s024",
+    "aspects": [
+      "FORM",
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Align intent and implementation",
+      "scope": "repo",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s024",
+    "source": "synthetic"
+  },
+  {
+    "id": "s025",
+    "aspects": [
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Reveal hidden structure",
+      "scope": "analysis",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s025",
+    "source": "synthetic"
+  },
+  {
+    "id": "s026",
+    "aspects": [
+      "VOID",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Stabilize long term outcome",
+      "scope": "pipeline",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s026",
+    "source": "synthetic"
+  },
+  {
+    "id": "s027",
+    "aspects": [
+      "FORM",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Speed up local iteration",
+      "scope": "dev loop",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s027",
+    "source": "synthetic"
+  },
+  {
+    "id": "s028",
+    "aspects": [
+      "MIND",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Prune stale assumptions",
+      "scope": "reasoning graph",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s028",
+    "source": "synthetic"
+  },
+  {
+    "id": "s029",
+    "aspects": [
+      "FORM",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Produce explicit documentation",
+      "scope": "team workspace",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s029",
+    "source": "synthetic"
+  },
+  {
+    "id": "s030",
+    "aspects": [
+      "VOID",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Remove bottlenecks quickly",
+      "scope": "execution path",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s030",
+    "source": "synthetic"
+  },
+  {
+    "id": "s031",
+    "aspects": [
+      "MOTION",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Find strong signal in noise",
+      "scope": "dataset",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s031",
+    "source": "synthetic"
+  },
+  {
+    "id": "s032",
+    "aspects": [
+      "FORM",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Constrain unstable behavior",
+      "scope": "runtime",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s032",
+    "source": "synthetic"
+  },
+  {
+    "id": "s033",
+    "aspects": [
+      "MIND",
+      "FORM"
+    ],
+    "intent": {
+      "objective": "Codify operating model",
+      "scope": "process",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s033",
+    "source": "synthetic"
+  },
+  {
+    "id": "s034",
+    "aspects": [
+      "VOID",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Eliminate ambiguity",
+      "scope": "decision tree",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s034",
+    "source": "synthetic"
+  },
+  {
+    "id": "s035",
+    "aspects": [
+      "MOTION",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Break stale local minima",
+      "scope": "optimizer",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s035",
+    "source": "synthetic"
+  },
+  {
+    "id": "s036",
+    "aspects": [
+      "FORM",
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Align intent and implementation",
+      "scope": "repo",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s036",
+    "source": "synthetic"
+  },
+  {
+    "id": "s037",
+    "aspects": [
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Reveal hidden structure",
+      "scope": "analysis",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s037",
+    "source": "synthetic"
+  },
+  {
+    "id": "s038",
+    "aspects": [
+      "VOID",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Stabilize long term outcome",
+      "scope": "pipeline",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s038",
+    "source": "synthetic"
+  },
+  {
+    "id": "s039",
+    "aspects": [
+      "FORM",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Speed up local iteration",
+      "scope": "dev loop",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s039",
+    "source": "synthetic"
+  },
+  {
+    "id": "s040",
+    "aspects": [
+      "MIND",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Prune stale assumptions",
+      "scope": "reasoning graph",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s040",
+    "source": "synthetic"
+  },
+  {
+    "id": "s041",
+    "aspects": [
+      "FORM",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Produce explicit documentation",
+      "scope": "team workspace",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s041",
+    "source": "synthetic"
+  },
+  {
+    "id": "s042",
+    "aspects": [
+      "VOID",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Remove bottlenecks quickly",
+      "scope": "execution path",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s042",
+    "source": "synthetic"
+  },
+  {
+    "id": "s043",
+    "aspects": [
+      "MOTION",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Find strong signal in noise",
+      "scope": "dataset",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s043",
+    "source": "synthetic"
+  },
+  {
+    "id": "s044",
+    "aspects": [
+      "FORM",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Constrain unstable behavior",
+      "scope": "runtime",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s044",
+    "source": "synthetic"
+  },
+  {
+    "id": "s045",
+    "aspects": [
+      "MIND",
+      "FORM"
+    ],
+    "intent": {
+      "objective": "Codify operating model",
+      "scope": "process",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s045",
+    "source": "synthetic"
+  },
+  {
+    "id": "s046",
+    "aspects": [
+      "VOID",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Eliminate ambiguity",
+      "scope": "decision tree",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s046",
+    "source": "synthetic"
+  },
+  {
+    "id": "s047",
+    "aspects": [
+      "MOTION",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Break stale local minima",
+      "scope": "optimizer",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s047",
+    "source": "synthetic"
+  },
+  {
+    "id": "s048",
+    "aspects": [
+      "FORM",
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Align intent and implementation",
+      "scope": "repo",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s048",
+    "source": "synthetic"
+  },
+  {
+    "id": "s049",
+    "aspects": [
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Reveal hidden structure",
+      "scope": "analysis",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s049",
+    "source": "synthetic"
+  },
+  {
+    "id": "s050",
+    "aspects": [
+      "VOID",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Stabilize long term outcome",
+      "scope": "pipeline",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s050",
+    "source": "synthetic"
+  },
+  {
+    "id": "s051",
+    "aspects": [
+      "FORM",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Speed up local iteration",
+      "scope": "dev loop",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s051",
+    "source": "synthetic"
+  },
+  {
+    "id": "s052",
+    "aspects": [
+      "MIND",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Prune stale assumptions",
+      "scope": "reasoning graph",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s052",
+    "source": "synthetic"
+  },
+  {
+    "id": "s053",
+    "aspects": [
+      "FORM",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Produce explicit documentation",
+      "scope": "team workspace",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s053",
+    "source": "synthetic"
+  },
+  {
+    "id": "s054",
+    "aspects": [
+      "VOID",
+      "MOTION"
+    ],
+    "intent": {
+      "objective": "Remove bottlenecks quickly",
+      "scope": "execution path",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s054",
+    "source": "synthetic"
+  },
+  {
+    "id": "s055",
+    "aspects": [
+      "MOTION",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Find strong signal in noise",
+      "scope": "dataset",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s055",
+    "source": "synthetic"
+  },
+  {
+    "id": "s056",
+    "aspects": [
+      "FORM",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Constrain unstable behavior",
+      "scope": "runtime",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "NONE"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s056",
+    "source": "synthetic"
+  },
+  {
+    "id": "s057",
+    "aspects": [
+      "MIND",
+      "FORM"
+    ],
+    "intent": {
+      "objective": "Codify operating model",
+      "scope": "process",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s057",
+    "source": "synthetic"
+  },
+  {
+    "id": "s058",
+    "aspects": [
+      "VOID",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Eliminate ambiguity",
+      "scope": "decision tree",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s058",
+    "source": "synthetic"
+  },
+  {
+    "id": "s059",
+    "aspects": [
+      "MOTION",
+      "DECAY"
+    ],
+    "intent": {
+      "objective": "Break stale local minima",
+      "scope": "optimizer",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "HIGH"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s059",
+    "source": "synthetic"
+  },
+  {
+    "id": "s060",
+    "aspects": [
+      "FORM",
+      "MIND",
+      "LIGHT"
+    ],
+    "intent": {
+      "objective": "Align intent and implementation",
+      "scope": "repo",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "expected_action": "AUTO",
+    "sample_id": "s060",
+    "source": "synthetic"
+  }
+]
