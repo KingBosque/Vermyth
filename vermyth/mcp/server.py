@@ -10,9 +10,11 @@ import json
 import os
 import sys
 from typing import Any, BinaryIO, TextIO
+from urllib.parse import parse_qs, urlparse
 
 from vermyth.mcp.binary_transport import FrameType, decode_frame_from_buffer, encode_frame
 
+from vermyth.arcane.discovery import inspect_semantic_bundle_detail, list_bundle_catalog
 from vermyth.arcane.invoke import attach_arcane_provenance, resolve_tool_invocation
 from vermyth.bootstrap import build_tools, build_tools_from_env
 from vermyth.engine.projection_backends import NullProjectionBackend
@@ -302,12 +304,71 @@ class VermythMCPServer:
                 "uri": "vermyth://programs",
                 "description": "List stored semantic programs (optional query ?limit=N, default 50).",
             },
+            {
+                "name": "semantic_bundles",
+                "uri": "vermyth://semantic_bundles",
+                "description": "List semantic bundle catalog (optional ?kind=decide|cast|compile_program).",
+            },
+            {
+                "name": "semantic_bundle",
+                "uriTemplate": "vermyth://semantic_bundle/{bundle_id}",
+                "description": "Bundle manifest + compiled preview (query ?version=1).",
+            },
         ]
         self._send(make_success(get_id(message), {"resources": resources}))
 
     def _handle_resources_read(self, message: dict) -> None:
         params = get_params(message)
         uri = str(params.get("uri", ""))
+        try:
+            pu = urlparse(uri)
+            if pu.scheme == "vermyth" and pu.netloc == "semantic_bundles":
+                qs = parse_qs(pu.query)
+                raw_k = (qs.get("kind") or [None])[0]
+                k = (
+                    raw_k
+                    if raw_k in ("decide", "cast", "compile_program")
+                    else None
+                )
+                payload: Any = {"bundles": list_bundle_catalog(kind=k)}
+                self._send(
+                    make_success(
+                        get_id(message),
+                        {"contents": [{"uri": uri, "json": payload}]},
+                    )
+                )
+                return
+            if pu.scheme == "vermyth" and pu.netloc == "semantic_bundle":
+                bid = pu.path.lstrip("/")
+                if not bid:
+                    self._send(
+                        make_error(
+                            get_id(message),
+                            ERROR_INVALID_PARAMS,
+                            "bundle_id required in vermyth://semantic_bundle/{bundle_id}",
+                        )
+                    )
+                    return
+                qs = parse_qs(pu.query)
+                try:
+                    ver = int((qs.get("version") or ["1"])[0])
+                except ValueError as exc:
+                    self._send(
+                        make_error(get_id(message), ERROR_INVALID_PARAMS, str(exc))
+                    )
+                    return
+                payload = inspect_semantic_bundle_detail(bid, ver)
+                self._send(
+                    make_success(
+                        get_id(message),
+                        {"contents": [{"uri": uri, "json": payload}]},
+                    )
+                )
+                return
+        except (FileNotFoundError, ValueError) as exc:
+            self._send(make_error(get_id(message), ERROR_INVALID_PARAMS, str(exc)))
+            return
+
         if self._tools is None:
             self._send(
                 make_error(

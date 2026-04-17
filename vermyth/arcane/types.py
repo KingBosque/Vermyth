@@ -64,6 +64,10 @@ class SemanticBundleManifest(BaseModel):
     kind: Literal["decide", "cast", "compile_program"]
     template: dict[str, Any]
     param_keys: tuple[str, ...] = Field(default_factory=tuple)
+    summary: str | None = None
+    description: str | None = None
+    recommended_for: tuple[str, ...] = Field(default_factory=tuple)
+    stability: Literal["stable", "experimental"] | None = None
 
 
 class CompiledInvocation(BaseModel):

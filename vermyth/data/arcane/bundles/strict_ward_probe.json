@@ -2,6 +2,13 @@
   "id": "strict_ward_probe",
   "version": 1,
   "kind": "decide",
+  "summary": "Stricter policy gates (high allow_min_resonance + effect-risk floor)",
+  "description": "Encodes ward-style thresholds (0.92 allow_min_resonance, 0.95 effect_risk_min_score) so callers do not hand-merge PolicyThresholds for the same intent shape.",
+  "recommended_for": [
+    "Higher-stakes decisions where you want tighter ALLOW gates by default",
+    "Avoiding copy-paste errors when setting thresholds on decide"
+  ],
+  "stability": "stable",
   "param_keys": ["topic"],
   "template": {
     "intent": {

@@ -99,6 +99,13 @@ def test_http_adapter_endpoints(tmp_path: Path) -> None:
         assert "decision" in bundle_decide and "cast" in bundle_decide
         assert bundle_decide["arcane_provenance"]["bundle_id"] == "coherent_probe"
 
+        catalog = _request(f"{base}/arcane/bundles")
+        assert any(b["bundle_id"] == "coherent_probe" for b in catalog["bundles"])
+        detail = _request(f"{base}/arcane/bundles/coherent_probe?version=1")
+        assert detail["manifest"]["id"] == "coherent_probe"
+        assert detail["compiled_preview"]["skill_id"] == "decide"
+        assert detail["semantic_bundle_ref_example"]["bundle_id"] == "coherent_probe"
+
         events = _request(f"{base}/events?tail=20")
         assert "events" in events
 

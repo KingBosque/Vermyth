@@ -213,6 +213,17 @@ class VermythTools:
         return arcane_tools.tool_expand_semantic_bundle(self, skill_id=skill_id, input=input)
     def tool_compile_ritual(self, ritual: dict[str, Any]) -> dict[str, Any]:
         return arcane_tools.tool_compile_ritual(self, ritual=ritual)
+    def tool_list_semantic_bundles(self, kind: str | None = None) -> dict[str, Any]:
+        return arcane_tools.tool_list_semantic_bundles(self, kind=kind)
+    def tool_inspect_semantic_bundle(
+        self,
+        bundle_id: str,
+        version: int,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        return arcane_tools.tool_inspect_semantic_bundle(
+            self, bundle_id=bundle_id, version=version, params=params
+        )
     def tool_propose_genesis(
         self,
         *,

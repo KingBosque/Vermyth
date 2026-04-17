@@ -106,7 +106,12 @@ Console entry points after install:
 ### Arcane semantic layer (optional)
 
 - **`vermyth.arcane`** maps ritual / ward / divination / banishment vocabulary to real behavior: bundle compilation, policy merges, program metadata, and provenance on receipts. Plain `skill_id` + `input` remains the baseline; **`semantic_bundle`** in task input (or the A2A extension URI) is optional and expands server-side.
-- MCP tools: **`expand_semantic_bundle`**, **`compile_ritual`**. Operational spec: [`docs/specs/ontology.md`](docs/specs/ontology.md); design digest: [`docs/specs/arcane-design-summary.md`](docs/specs/arcane-design-summary.md).
+- **Discover bundles first (recommended):** use MCP **`list_semantic_bundles`** or HTTP **`GET /arcane/bundles`** to see built-in bundles (summaries, `target_skill`, `param_keys`). Use **`inspect_semantic_bundle`** or **`GET /arcane/bundles/{bundle_id}?version=1`** to see the manifest plus a **compiled preview** (what tool and arguments it becomes—no black box). MCP resources: `vermyth://semantic_bundles` and `vermyth://semantic_bundle/{bundle_id}?version=1`.
+- **Canonical bundle-first flows** (then plain JSON equivalents in [`docs/http_adapter.md`](docs/http_adapter.md) and [`docs/specs/arcane-design-summary.md`](docs/specs/arcane-design-summary.md)):
+  - **`coherent_probe`** — default `decide` probe with MIND+LIGHT; fewer fields than spelling `intent` + `aspects`; adds `arcane_provenance` when used.
+  - **`strict_ward_probe`** — same shape with **stricter policy thresholds** (ward) without hand-merging `PolicyThresholds`.
+  - **`divination_gate`** — **requires `causal_root_cast_id`** when executing `decide` (divination/review gate); fail-fast without causal context.
+- MCP tools: **`list_semantic_bundles`**, **`inspect_semantic_bundle`**, **`expand_semantic_bundle`**, **`compile_ritual`**. Operational spec: [`docs/specs/ontology.md`](docs/specs/ontology.md); design digest: [`docs/specs/arcane-design-summary.md`](docs/specs/arcane-design-summary.md).
 
 ### Emergent aspect genesis
 

@@ -10,6 +10,8 @@ python -m vermyth.adapters.http --host 127.0.0.1 --port 7777 --db vermyth.db
 
 ## Endpoints
 
+- `GET /arcane/bundles`: semantic bundle **catalog** (JSON `{ "bundles": [ ... ] }`). Optional query `?kind=decide|cast|compile_program` filters by bundle kind. Same data as MCP `list_semantic_bundles`.
+- `GET /arcane/bundles/{bundle_id}?version=1`: bundle **manifest** + **compiled preview** + copy-paste `semantic_bundle_ref_example` (same as MCP `inspect_semantic_bundle` / resource `vermyth://semantic_bundle/{bundle_id}`). No execution.
 - `GET /tools`: returns `TOOL_DEFINITIONS` (same list as MCP `tools/list` for stable tools).
 - `POST /tools/<name>`: invokes the same handler used by MCP `tools/call`. Tool names must be allowed by `VermythTools` tool scope (default `*`). If the JSON body includes a **`semantic_bundle`** reference (`bundle_id`, `version`, `params`), it is expanded **before** dispatch using the same logic as `POST /a2a/tasks` ([`resolve_tool_invocation`](../../vermyth/arcane/invoke.py)); the resolved tool may differ from the path segment when the bundle targets another skill (e.g. `cast`). Successful dict-shaped results may include an additive **`arcane_provenance`** field when a bundle was used. Plain JSON without a bundle is unchanged.
 - `GET /.well-known/agent.json`: returns an **agent card** JSON document built from `TOOL_DEFINITIONS` (skills mirror tool names). Alias: `GET /.well-known/agent-card.json`. See [docs/a2a.md](a2a.md).

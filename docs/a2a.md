@@ -24,7 +24,7 @@ The optional SDK builds a richer `AgentCard` (capabilities, security schemes, ex
 
 Send **`Idempotency-Key`** on HTTP to reuse a prior result for the same payload (replay-safe retries).
 
-**Semantic bundles:** `input` may include `semantic_bundle` (`bundle_id`, `version`, `params`); the gateway expands it before dispatch (same as [`resolve_tool_invocation`](../vermyth/arcane/invoke.py)). MCP `tools/call` and HTTP `POST /tools/<name>` use the same expansion so bundle behavior matches tasks. See [`docs/http_adapter.md`](http_adapter.md).
+**Semantic bundles:** `input` may include `semantic_bundle` (`bundle_id`, `version`, `params`); the gateway expands it before dispatch (same as [`resolve_tool_invocation`](../vermyth/arcane/invoke.py)). MCP `tools/call` and HTTP `POST /tools/<name>` use the same expansion so bundle behavior matches tasks. List and inspect available bundles via MCP `list_semantic_bundles` / `inspect_semantic_bundle`, MCP resources `vermyth://semantic_bundles`, or HTTP `GET /arcane/bundles` — see [`docs/http_adapter.md`](http_adapter.md).
 
 Response shape **TaskResult**:
 

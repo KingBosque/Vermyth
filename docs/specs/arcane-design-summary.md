@@ -60,11 +60,28 @@ flowchart LR
 | Receipt field + persistence | [`vermyth/schema/_legacy.py`](../../vermyth/schema/_legacy.py) (`arcane_provenance`), [`vermyth/grimoire/repositories/receipts.py`](../../vermyth/grimoire/repositories/receipts.py) |
 | MCP tools | [`vermyth/mcp/tools/arcane.py`](../../vermyth/mcp/tools/arcane.py) (`expand_semantic_bundle`, `compile_ritual`) |
 
+## Discovery (list, inspect, preview)
+
+- **MCP tools:** [`list_semantic_bundles`](../../vermyth/mcp/tools/arcane.py) (optional `kind` filter), [`inspect_semantic_bundle`](../../vermyth/mcp/tools/arcane.py) (`bundle_id`, `version`, optional `params` for an exact compiled preview).
+- **MCP resources:** `vermyth://semantic_bundles` (optional `?kind=`), `vermyth://semantic_bundle/{bundle_id}?version=1` — same JSON as the tools (read-only).
+- **HTTP:** [`GET /arcane/bundles`](../http_adapter.md) and [`GET /arcane/bundles/{bundle_id}`](../http_adapter.md) — see [`docs/http_adapter.md`](../http_adapter.md).
+- Built-in bundle JSON lives under [`vermyth/data/arcane/bundles/`](../../vermyth/data/arcane/bundles/) with optional `summary`, `description`, `recommended_for`, `stability`. Inspect responses include **manifest** + **compiled_preview** so the runtime form is never hidden.
+
+## Bundles to prefer first (canonical workflows)
+
+| Bundle | Target | Why bundle-first |
+|--------|--------|------------------|
+| `coherent_probe` | `decide` | One `semantic_bundle` ref vs full `intent` + `aspects`; provenance on the result. |
+| `strict_ward_probe` | `decide` | Encodes ward thresholds (0.92 / effect-risk) without hand-writing `thresholds`. |
+| `divination_gate` | `decide` | Encodes causal/divination gate; fails without `causal_root_cast_id` when required. |
+
+Plain JSON equivalents are documented in [`docs/http_adapter.md`](../http_adapter.md); both remain supported.
+
 ## Wire protocol
 
 - **Baseline:** Any task or tool call may use only **`skill_id`** and **`input`** (plain JSON).
 - **Optional:** **`vermyth.io/v1/semantic_bundle`** (A2A extension) or inline **`semantic_bundle`** on tool arguments; server expands to the baseline plus provenance. See [`docs/a2a-compatibility.md`](../a2a-compatibility.md).
-- **Parity:** `POST /a2a/tasks`, MCP **`tools/call`**, MCP binary **PACKET** tool dispatch (non-session handlers), and **`POST /tools/<name>`** all use [`resolve_tool_invocation`](../../vermyth/arcane/invoke.py) so bundle expansion matches the task gateway. Meta-tools `expand_semantic_bundle` and `compile_ritual` are exempt from pre-expansion.
+- **Parity:** `POST /a2a/tasks`, MCP **`tools/call`**, MCP binary **PACKET** tool dispatch (non-session handlers), and **`POST /tools/<name>`** all use [`resolve_tool_invocation`](../../vermyth/arcane/invoke.py) so bundle expansion matches the task gateway. Meta-tools `expand_semantic_bundle`, `compile_ritual`, `list_semantic_bundles`, and `inspect_semantic_bundle` are exempt from pre-expansion.
 - **MCP:** Stable tools listed in [`docs/STABILITY.md`](../STABILITY.md). See [`docs/http_adapter.md`](../http_adapter.md) for bundle-first HTTP examples.
 
 ## Persistence

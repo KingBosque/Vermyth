@@ -121,6 +121,8 @@ def test_handle_tools_list_tools():
         "decide",
         "expand_semantic_bundle",
         "compile_ritual",
+        "list_semantic_bundles",
+        "inspect_semantic_bundle",
         "events_tail",
         "cast",
         "fluid_cast",
@@ -180,6 +182,8 @@ def test_handle_resources_list():
         "execution_receipt",
         "program",
         "programs",
+        "semantic_bundles",
+        "semantic_bundle",
     ]
 
 
@@ -196,6 +200,25 @@ def test_handle_resources_read_not_implemented_without_tools():
     s._out.seek(0)
     out = json.loads(s._out.read())
     assert out["error"]["code"] == ERROR_NOT_IMPLEMENTED
+
+
+def test_handle_resources_read_semantic_bundles_without_tools():
+    s = _fresh_server()
+    s._handle_resources_read(
+        {
+            "jsonrpc": "2.0",
+            "id": 91,
+            "method": "resources/read",
+            "params": {"uri": "vermyth://semantic_bundles"},
+        }
+    )
+    s._out.seek(0)
+    out = json.loads(s._out.read())
+    assert "result" in out
+    contents = out["result"]["contents"]
+    assert contents[0]["json"]["bundles"]
+    ids = {b["bundle_id"] for b in contents[0]["json"]["bundles"]}
+    assert "coherent_probe" in ids
 
 
 def test_handle_tools_call_not_implemented():

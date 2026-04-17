@@ -6,6 +6,12 @@ from vermyth.arcane.compiler import (
     compile_semantic_bundle_ref,
     merge_ward_into_thresholds,
 )
+from vermyth.arcane.discovery import (
+    inspect_semantic_bundle_detail,
+    list_bundle_catalog,
+    list_bundle_ids,
+    preview_compiled_invocation,
+)
 from vermyth.arcane.invoke import (
     attach_arcane_provenance,
     expand_task_input,
@@ -37,5 +43,9 @@ __all__ = [
     "expand_task_input",
     "expand_to_invocation",
     "extract_semantic_bundle_ref",
+    "inspect_semantic_bundle_detail",
+    "list_bundle_catalog",
+    "list_bundle_ids",
+    "preview_compiled_invocation",
     "resolve_tool_invocation",
 ]

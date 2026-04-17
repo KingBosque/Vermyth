@@ -2,6 +2,13 @@
   "id": "divination_gate",
   "version": 1,
   "kind": "decide",
+  "summary": "Requires causal_root_cast_id (divination / narrative review gate)",
+  "description": "Sets __require_causal_root__ via bundle expansion so decide fails fast without causal context—clearer than ad hoc policy fields in hand-written JSON.",
+  "recommended_for": [
+    "Flows where you must prove causal lineage before policy allows the decision",
+    "Auditable review gates paired with causal graph tooling"
+  ],
+  "stability": "stable",
   "param_keys": ["topic"],
   "template": {
     "intent": {

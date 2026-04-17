@@ -13,6 +13,8 @@ _TOOL_INVOCATION_SKIP_SEMANTIC_EXPANSION: frozenset[str] = frozenset(
     {
         "expand_semantic_bundle",
         "compile_ritual",
+        "list_semantic_bundles",
+        "inspect_semantic_bundle",
     }
 )
 

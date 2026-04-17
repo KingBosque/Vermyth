@@ -11,6 +11,7 @@ import pytest
 from vermyth.adapters.a2a.gateway import TaskGateway
 from vermyth.arcane.bundles import load_bundle
 from vermyth.arcane.compiler import compile_ritual_spec, compile_semantic_bundle_ref
+from vermyth.arcane.discovery import inspect_semantic_bundle_detail, list_bundle_catalog
 from vermyth.arcane.invoke import resolve_tool_invocation
 from vermyth.arcane.types import BanishmentSpec, RitualSpec, WardSpec
 from vermyth.engine.operations.cast import compute_resonance
@@ -169,6 +170,22 @@ def test_divination_gate_requires_causal(make_tools):
     )
     assert out["status"] == "failed"
     assert "causal" in out["error"].lower() or "divination" in out["error"].lower()
+
+
+def test_list_bundle_catalog_includes_builtins():
+    rows = list_bundle_catalog()
+    ids = {r["bundle_id"] for r in rows}
+    assert "coherent_probe" in ids
+    assert "strict_ward_probe" in ids
+    assert all(r["target_skill"] in ("decide", "cast", "compile_program") for r in rows)
+
+
+def test_inspect_semantic_bundle_detail_has_compiled_preview():
+    d = inspect_semantic_bundle_detail("coherent_probe", 1)
+    assert d["manifest"]["id"] == "coherent_probe"
+    assert d["compiled_preview"]["skill_id"] == "decide"
+    assert "intent" in d["compiled_preview"]["input"]
+    assert d["semantic_bundle_ref_example"]["bundle_id"] == "coherent_probe"
 
 
 def test_resolve_tool_invocation_decide_to_cast(monkeypatch):

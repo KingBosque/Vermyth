@@ -5,8 +5,10 @@ import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from vermyth.adapters.a2a import TaskGateway, build_agent_card
+from vermyth.arcane.discovery import inspect_semantic_bundle_detail, list_bundle_catalog
 from vermyth.arcane.invoke import attach_arcane_provenance, resolve_tool_invocation
 from vermyth.adapters.auth import resolve_principal
 from vermyth.bootstrap import build_tools
@@ -95,6 +97,36 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
                     "basis_version": int(latest.version),
                 },
             )
+            return
+        parsed = urlparse(self.path)
+        if parsed.path == "/arcane/bundles":
+            qs = parse_qs(parsed.query)
+            raw_k = (qs.get("kind") or [None])[0]
+            k = (
+                raw_k
+                if raw_k in ("decide", "cast", "compile_program")
+                else None
+            )
+            rows = list_bundle_catalog(kind=k)
+            _json_response(self, 200, {"bundles": rows})
+            return
+        if parsed.path.startswith("/arcane/bundles/"):
+            bid = parsed.path[len("/arcane/bundles/") :].strip("/")
+            if not bid or "/" in bid:
+                _json_response(self, 404, {"error": "not_found"})
+                return
+            qs = parse_qs(parsed.query)
+            try:
+                ver = int((qs.get("version") or ["1"])[0])
+            except ValueError:
+                _json_response(self, 400, {"error": "invalid_version"})
+                return
+            try:
+                detail = inspect_semantic_bundle_detail(bid, ver)
+            except (FileNotFoundError, ValueError) as exc:
+                _json_response(self, 404, {"error": str(exc)})
+                return
+            _json_response(self, 200, detail)
             return
         _json_response(self, 404, {"error": "not_found"})
 

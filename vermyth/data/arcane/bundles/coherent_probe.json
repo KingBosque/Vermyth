@@ -2,6 +2,13 @@
   "id": "coherent_probe",
   "version": 1,
   "kind": "decide",
+  "summary": "Default policy probe with MIND+LIGHT and low side-effect tolerance",
+  "description": "Expands to decide with a formatted objective and fixed aspects. Prefer this over hand-writing full intent JSON when you want a repeatable coherence check and arcane_provenance on the result.",
+  "recommended_for": [
+    "Routine ALLOW/RESHAPE/DENY checks where you only vary the subject (topic)",
+    "Agents that should send fewer fields than a full intent + aspects object"
+  ],
+  "stability": "stable",
   "param_keys": ["topic"],
   "template": {
     "intent": {

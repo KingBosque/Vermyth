@@ -208,6 +208,62 @@ def test_mcp_integration_cast_success(tmp_path, valid_intent):
     assert resp["id"] == 1
 
 
+def test_mcp_list_semantic_bundles_tool(tmp_path):
+    db = tmp_path / "list_b.db"
+    eng = ResonanceEngine(CompositionEngine(), None)
+    g = Grimoire(db_path=db)
+    out = io.StringIO()
+    s = VermythMCPServer(
+        stdin=io.StringIO(),
+        stdout=out,
+        stderr=io.StringIO(),
+        engine=eng,
+        grimoire=g,
+    )
+    s._handle_tools_call(
+        {
+            "jsonrpc": "2.0",
+            "id": 50,
+            "method": "tools/call",
+            "params": {"name": "list_semantic_bundles", "arguments": {}},
+        }
+    )
+    out.seek(0)
+    resp = json.loads(out.read())
+    assert "result" in resp
+    bids = {b["bundle_id"] for b in resp["result"]["bundles"]}
+    assert "coherent_probe" in bids
+
+
+def test_mcp_inspect_semantic_bundle_tool(tmp_path):
+    db = tmp_path / "insp_b.db"
+    eng = ResonanceEngine(CompositionEngine(), None)
+    g = Grimoire(db_path=db)
+    out = io.StringIO()
+    s = VermythMCPServer(
+        stdin=io.StringIO(),
+        stdout=out,
+        stderr=io.StringIO(),
+        engine=eng,
+        grimoire=g,
+    )
+    s._handle_tools_call(
+        {
+            "jsonrpc": "2.0",
+            "id": 51,
+            "method": "tools/call",
+            "params": {
+                "name": "inspect_semantic_bundle",
+                "arguments": {"bundle_id": "strict_ward_probe", "version": 1},
+            },
+        }
+    )
+    out.seek(0)
+    resp = json.loads(out.read())
+    body = resp["result"]
+    assert body["compiled_preview"]["input"]["thresholds"]["allow_min_resonance"] == 0.92
+
+
 def test_mcp_integration_unknown_tool(tmp_path):
     db = tmp_path / "u.db"
     eng = ResonanceEngine(CompositionEngine(), None)
