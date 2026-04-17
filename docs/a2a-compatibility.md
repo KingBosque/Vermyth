@@ -35,7 +35,7 @@ Vermyth-specific payloads use explicit extension URIs (see `vermyth/adapters/a2a
 
 - `vermyth.io/v1/invoke` — tool invocation metadata
 - `vermyth.io/v1/execution_receipt` — receipt references where applicable
-- `vermyth.io/v1/semantic_bundle` — optional named semantic bundle for task input; server expands to `skill_id` + `input` (see `docs/specs/ontology.md`). Discover available bundles via MCP `list_semantic_bundles` or HTTP `GET /arcane/bundles` before sending tasks.
+- `vermyth.io/v1/semantic_bundle` — optional named semantic bundle for task input; server expands to `skill_id` + `input` (see `docs/specs/ontology.md`). Discover available bundles via MCP `list_semantic_bundles` or HTTP `GET /arcane/bundles` before sending tasks. For plain task `input`, use MCP `recommend_semantic_bundles` or HTTP `POST /arcane/recommend` for **manifest-driven** advisory bundle suggestions (inspectable; optional).
 
 Do not overload core Task/Message fields with Vermyth-only data.
 

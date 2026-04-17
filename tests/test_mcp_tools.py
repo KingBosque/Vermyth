@@ -208,6 +208,48 @@ def test_mcp_integration_cast_success(tmp_path, valid_intent):
     assert resp["id"] == 1
 
 
+def test_mcp_recommend_semantic_bundles_tool(tmp_path):
+    db = tmp_path / "rec_b.db"
+    eng = ResonanceEngine(CompositionEngine(), None)
+    g = Grimoire(db_path=db)
+    out = io.StringIO()
+    s = VermythMCPServer(
+        stdin=io.StringIO(),
+        stdout=out,
+        stderr=io.StringIO(),
+        engine=eng,
+        grimoire=g,
+    )
+    s._handle_tools_call(
+        {
+            "jsonrpc": "2.0",
+            "id": 52,
+            "method": "tools/call",
+            "params": {
+                "name": "recommend_semantic_bundles",
+                "arguments": {
+                    "skill_id": "decide",
+                    "input": {
+                        "intent": {
+                            "objective": "Probe coherence on mcp_rec",
+                            "scope": "semantic_bundle",
+                            "reversibility": "REVERSIBLE",
+                            "side_effect_tolerance": "LOW",
+                        },
+                        "aspects": ["MIND", "LIGHT"],
+                    },
+                },
+            },
+        }
+    )
+    out.seek(0)
+    resp = json.loads(out.read())
+    assert any(
+        r["bundle_id"] == "coherent_probe"
+        for r in resp["result"]["recommendations"]
+    )
+
+
 def test_mcp_list_semantic_bundles_tool(tmp_path):
     db = tmp_path / "list_b.db"
     eng = ResonanceEngine(CompositionEngine(), None)

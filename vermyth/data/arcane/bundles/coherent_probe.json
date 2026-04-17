@@ -10,6 +10,69 @@
   ],
   "stability": "stable",
   "param_keys": ["topic"],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "The bundle fixes aspects and intent shape, formats the objective, and adds arcane_provenance—less drift than repeating the same JSON by hand.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.95,
+        "require_all": [
+          {
+            "op": "aspects_eq",
+            "value": ["MIND", "LIGHT"],
+            "rule_id": "aspects"
+          },
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "semantic_bundle",
+              "reversibility": "REVERSIBLE",
+              "side_effect_tolerance": "LOW"
+            },
+            "rule_id": "intent_shape"
+          },
+          {
+            "op": "objective_starts_with",
+            "value": "Probe coherence on ",
+            "rule_id": "objective_prefix"
+          }
+        ]
+      },
+      {
+        "match_kind": "advisory",
+        "strength": 0.62,
+        "require_all": [
+          {
+            "op": "aspects_eq",
+            "value": ["MIND", "LIGHT"],
+            "rule_id": "aspects"
+          },
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "semantic_bundle",
+              "reversibility": "REVERSIBLE",
+              "side_effect_tolerance": "LOW"
+            },
+            "rule_id": "intent_shape"
+          },
+          {
+            "op": "objective_starts_with",
+            "value": "Probe coherence on ",
+            "negate": true,
+            "rule_id": "not_default_prefix"
+          },
+          {
+            "op": "objective_length_between",
+            "min_len": 1,
+            "max_len": 159,
+            "rule_id": "bounded_objective"
+          }
+        ]
+      }
+    ]
+  },
   "template": {
     "intent": {
       "objective": "Probe coherence on {topic}",

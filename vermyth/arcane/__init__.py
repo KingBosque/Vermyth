@@ -10,8 +10,10 @@ from vermyth.arcane.discovery import (
     inspect_semantic_bundle_detail,
     list_bundle_catalog,
     list_bundle_ids,
+    load_primary_bundle_manifest,
     preview_compiled_invocation,
 )
+from vermyth.arcane.recommend import recommend_for_plain_invocation
 from vermyth.arcane.invoke import (
     attach_arcane_provenance,
     expand_task_input,
@@ -21,8 +23,11 @@ from vermyth.arcane.invoke import (
 )
 from vermyth.arcane.types import (
     BanishmentSpec,
+    BundleRecommendationSpec,
     CompiledInvocation,
     DivinationSpec,
+    RecommendationRule,
+    RecommendationTier,
     RitualSpec,
     SemanticBundleManifest,
     WardSpec,
@@ -30,8 +35,11 @@ from vermyth.arcane.types import (
 
 __all__ = [
     "BanishmentSpec",
+    "BundleRecommendationSpec",
     "CompiledInvocation",
     "DivinationSpec",
+    "RecommendationRule",
+    "RecommendationTier",
     "RitualSpec",
     "SemanticBundleManifest",
     "WardSpec",
@@ -46,6 +54,8 @@ __all__ = [
     "inspect_semantic_bundle_detail",
     "list_bundle_catalog",
     "list_bundle_ids",
+    "load_primary_bundle_manifest",
     "preview_compiled_invocation",
+    "recommend_for_plain_invocation",
     "resolve_tool_invocation",
 ]

@@ -107,11 +107,12 @@ Console entry points after install:
 
 - **`vermyth.arcane`** maps ritual / ward / divination / banishment vocabulary to real behavior: bundle compilation, policy merges, program metadata, and provenance on receipts. Plain `skill_id` + `input` remains the baseline; **`semantic_bundle`** in task input (or the A2A extension URI) is optional and expands server-side.
 - **Discover bundles first (recommended):** use MCP **`list_semantic_bundles`** or HTTP **`GET /arcane/bundles`** to see built-in bundles (summaries, `target_skill`, `param_keys`). Use **`inspect_semantic_bundle`** or **`GET /arcane/bundles/{bundle_id}?version=1`** to see the manifest plus a **compiled preview** (what tool and arguments it becomes—no black box). MCP resources: `vermyth://semantic_bundles` and `vermyth://semantic_bundle/{bundle_id}?version=1`.
+- **Recommend bundles (advisory):** MCP **`recommend_semantic_bundles`** or HTTP **`POST /arcane/recommend`** with `{ "skill_id", "input" }` returns **inspectable** matches (`strength`, `match_kind`, `matched_features`, `why_better`) for plain JSON—**no execution**, never rewrites your request. Matching is **primarily manifest-driven**: each bundle may declare a **`recommendation`** block in its JSON (`target_skills`, ordered `tiers`, declarative rules). Use a higher `min_strength` (optional) to filter weak hints. Catalog rows from **`list_semantic_bundles`** / **`GET /arcane/bundles`** include a compact **`recommendation`** hint when present.
 - **Canonical bundle-first flows** (then plain JSON equivalents in [`docs/http_adapter.md`](docs/http_adapter.md) and [`docs/specs/arcane-design-summary.md`](docs/specs/arcane-design-summary.md)):
   - **`coherent_probe`** — default `decide` probe with MIND+LIGHT; fewer fields than spelling `intent` + `aspects`; adds `arcane_provenance` when used.
   - **`strict_ward_probe`** — same shape with **stricter policy thresholds** (ward) without hand-merging `PolicyThresholds`.
   - **`divination_gate`** — **requires `causal_root_cast_id`** when executing `decide` (divination/review gate); fail-fast without causal context.
-- MCP tools: **`list_semantic_bundles`**, **`inspect_semantic_bundle`**, **`expand_semantic_bundle`**, **`compile_ritual`**. Operational spec: [`docs/specs/ontology.md`](docs/specs/ontology.md); design digest: [`docs/specs/arcane-design-summary.md`](docs/specs/arcane-design-summary.md).
+- MCP tools: **`list_semantic_bundles`**, **`inspect_semantic_bundle`**, **`recommend_semantic_bundles`**, **`expand_semantic_bundle`**, **`compile_ritual`**. Operational spec: [`docs/specs/ontology.md`](docs/specs/ontology.md); design digest: [`docs/specs/arcane-design-summary.md`](docs/specs/arcane-design-summary.md).
 
 ### Emergent aspect genesis
 

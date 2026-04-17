@@ -60,6 +60,14 @@ flowchart LR
 | Receipt field + persistence | [`vermyth/schema/_legacy.py`](../../vermyth/schema/_legacy.py) (`arcane_provenance`), [`vermyth/grimoire/repositories/receipts.py`](../../vermyth/grimoire/repositories/receipts.py) |
 | MCP tools | [`vermyth/mcp/tools/arcane.py`](../../vermyth/mcp/tools/arcane.py) (`expand_semantic_bundle`, `compile_ritual`) |
 
+## Recommendation (advisory selection)
+
+- **Manifest-first:** Built-in bundles declare optional **`recommendation`** metadata in JSON (`BundleRecommendationSpec` in [`vermyth/arcane/types.py`](../../vermyth/arcane/types.py)): `target_skills`, `why_better`, and ordered **`tiers`** (each tier: `match_kind`, `strength`, `require_all` rules). The engine evaluates declarative ops listed in [`RULE_OPS`](../../vermyth/arcane/recommend.py); first matching tier wins per bundle. New bundles can opt in without adding Python branches.
+- **MCP:** [`recommend_semantic_bundles`](../../vermyth/mcp/tools/arcane.py) — pass `skill_id` + `input` as for a plain tool call; returns ranked suggestions with **explicit `matched_features`** strings (rule ids / ops echoed for inspection).
+- **HTTP:** `POST /arcane/recommend` with the same JSON body.
+- **Discovery:** Catalog/list responses may include a compact **`recommendation`** summary when the manifest declares tiers (`target_skills`, `tier_count`, `match_kinds`).
+- Recommendations are **advisory**; plain JSON execution is unchanged. There is **no** silent rewrite of requests on invoke paths in the default stack. Scope stays **decide**-centric unless a bundle opts in via `target_skills`; broader skills can be added later through manifests.
+
 ## Discovery (list, inspect, preview)
 
 - **MCP tools:** [`list_semantic_bundles`](../../vermyth/mcp/tools/arcane.py) (optional `kind` filter), [`inspect_semantic_bundle`](../../vermyth/mcp/tools/arcane.py) (`bundle_id`, `version`, optional `params` for an exact compiled preview).

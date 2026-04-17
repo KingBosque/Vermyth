@@ -106,6 +106,26 @@ def test_http_adapter_endpoints(tmp_path: Path) -> None:
         assert detail["compiled_preview"]["skill_id"] == "decide"
         assert detail["semantic_bundle_ref_example"]["bundle_id"] == "coherent_probe"
 
+        rec = _request(
+            f"{base}/arcane/recommend",
+            method="POST",
+            body={
+                "skill_id": "decide",
+                "input": {
+                    "intent": {
+                        "objective": "Probe coherence on http_rec",
+                        "scope": "semantic_bundle",
+                        "reversibility": "REVERSIBLE",
+                        "side_effect_tolerance": "LOW",
+                    },
+                    "aspects": ["MIND", "LIGHT"],
+                },
+            },
+        )
+        assert any(
+            r["bundle_id"] == "coherent_probe" for r in rec["recommendations"]
+        )
+
         events = _request(f"{base}/events?tail=20")
         assert "events" in events
 

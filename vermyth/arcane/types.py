@@ -54,6 +54,53 @@ class RitualSpec(BaseModel):
     banishment: BanishmentSpec | None = None
 
 
+class RecommendationRule(BaseModel):
+    """Single deterministic predicate evaluated against plain tool arguments."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    op: str = Field(
+        min_length=1,
+        description="Evaluator name (see vermyth.arcane.recommend.RULE_OPS).",
+    )
+    value: Any = None
+    path: str | None = None
+    field: str | None = None
+    negate: bool = False
+    min_len: int | None = Field(default=None, ge=0)
+    max_len: int | None = Field(default=None, ge=0)
+    rule_id: str | None = None
+
+
+class RecommendationTier(BaseModel):
+    """First matching tier wins for a bundle (tiers are ordered)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    match_kind: Literal["exact", "strong", "advisory"]
+    strength: float = Field(ge=0.0, le=1.0)
+    require_all: tuple[RecommendationRule, ...] = Field(default_factory=tuple)
+
+
+class BundleRecommendationSpec(BaseModel):
+    """Inspectable, manifest-declared matching for advisory bundle suggestions."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    target_skills: tuple[str, ...] = Field(
+        default=("decide",),
+        description="Plain invocations for these tool names are considered.",
+    )
+    why_better: str = Field(
+        min_length=1,
+        description="Why prefer semantic_bundle over equivalent plain JSON.",
+    )
+    tiers: tuple[RecommendationTier, ...] = Field(
+        min_length=1,
+        description="Ordered; first tier whose rules all pass is used.",
+    )
+
+
 class SemanticBundleManifest(BaseModel):
     """Versioned, reusable bundle: expands to a concrete tool invocation."""
 
@@ -68,6 +115,7 @@ class SemanticBundleManifest(BaseModel):
     description: str | None = None
     recommended_for: tuple[str, ...] = Field(default_factory=tuple)
     stability: Literal["stable", "experimental"] | None = None
+    recommendation: BundleRecommendationSpec | None = None
 
 
 class CompiledInvocation(BaseModel):

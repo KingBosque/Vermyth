@@ -12,6 +12,7 @@ from vermyth.adapters.a2a.gateway import TaskGateway
 from vermyth.arcane.bundles import load_bundle
 from vermyth.arcane.compiler import compile_ritual_spec, compile_semantic_bundle_ref
 from vermyth.arcane.discovery import inspect_semantic_bundle_detail, list_bundle_catalog
+from vermyth.arcane.recommend import recommend_for_plain_invocation
 from vermyth.arcane.invoke import resolve_tool_invocation
 from vermyth.arcane.types import BanishmentSpec, RitualSpec, WardSpec
 from vermyth.engine.operations.cast import compute_resonance
@@ -180,12 +181,153 @@ def test_list_bundle_catalog_includes_builtins():
     assert all(r["target_skill"] in ("decide", "cast", "compile_program") for r in rows)
 
 
+def test_catalog_includes_compact_recommendation_hints():
+    rows = {r["bundle_id"]: r for r in list_bundle_catalog()}
+    for bid in ("coherent_probe", "strict_ward_probe", "divination_gate"):
+        hint = rows[bid].get("recommendation")
+        assert hint is not None
+        assert hint["tier_count"] >= 1
+        assert "decide" in hint["target_skills"]
+        assert hint["match_kinds"]
+
+
+def test_bundle_manifest_parses_recommendation_metadata():
+    m = load_bundle("coherent_probe", 1)
+    assert m.recommendation is not None
+    assert m.recommendation.why_better
+    assert len(m.recommendation.tiers) >= 1
+
+
+def test_recommend_coherent_probe_advisory_tier_from_manifest():
+    out = recommend_for_plain_invocation(
+        "decide",
+        {
+            "intent": {
+                "objective": "Custom probe topic here",
+                "scope": "semantic_bundle",
+                "reversibility": "REVERSIBLE",
+                "side_effect_tolerance": "LOW",
+            },
+            "aspects": ["MIND", "LIGHT"],
+        },
+    )
+    rows = [r for r in out["recommendations"] if r["bundle_id"] == "coherent_probe"]
+    assert rows and rows[0]["match_kind"] == "advisory"
+
+
 def test_inspect_semantic_bundle_detail_has_compiled_preview():
     d = inspect_semantic_bundle_detail("coherent_probe", 1)
     assert d["manifest"]["id"] == "coherent_probe"
     assert d["compiled_preview"]["skill_id"] == "decide"
     assert "intent" in d["compiled_preview"]["input"]
     assert d["semantic_bundle_ref_example"]["bundle_id"] == "coherent_probe"
+
+
+def test_recommend_skips_when_semantic_bundle_present():
+    out = recommend_for_plain_invocation(
+        "decide",
+        {
+            "semantic_bundle": {
+                "bundle_id": "coherent_probe",
+                "version": 1,
+                "params": {"topic": "x"},
+            }
+        },
+    )
+    assert out["recommendations"] == []
+
+
+def test_recommend_coherent_probe_exact():
+    out = recommend_for_plain_invocation(
+        "decide",
+        {
+            "intent": {
+                "objective": "Probe coherence on audit",
+                "scope": "semantic_bundle",
+                "reversibility": "REVERSIBLE",
+                "side_effect_tolerance": "LOW",
+            },
+            "aspects": ["MIND", "LIGHT"],
+        },
+    )
+    top = [r for r in out["recommendations"] if r["bundle_id"] == "coherent_probe"]
+    assert top and top[0]["match_kind"] == "exact"
+    assert top[0]["strength"] >= 0.9
+
+
+def test_recommend_strict_ward_probe_exact():
+    out = recommend_for_plain_invocation(
+        "decide",
+        {
+            "intent": {
+                "objective": "Warded coherence probe on prod",
+                "scope": "semantic_bundle",
+                "reversibility": "REVERSIBLE",
+                "side_effect_tolerance": "LOW",
+            },
+            "aspects": ["MIND"],
+            "thresholds": {"allow_min_resonance": 0.92, "effect_risk_min_score": 0.95},
+        },
+    )
+    top = [r for r in out["recommendations"] if r["bundle_id"] == "strict_ward_probe"]
+    assert top and top[0]["match_kind"] == "exact"
+
+
+def test_recommend_divination_gate_strong():
+    out = recommend_for_plain_invocation(
+        "decide",
+        {
+            "intent": {
+                "objective": "Divination gate on risk",
+                "scope": "semantic_bundle",
+                "reversibility": "REVERSIBLE",
+                "side_effect_tolerance": "LOW",
+            },
+            "aspects": ["MIND", "LIGHT"],
+            "__require_causal_root__": True,
+        },
+    )
+    top = [r for r in out["recommendations"] if r["bundle_id"] == "divination_gate"]
+    assert top and top[0]["match_kind"] in ("exact", "strong")
+
+
+def test_recommend_divination_advisory_with_causal_id_only():
+    out = recommend_for_plain_invocation(
+        "decide",
+        {
+            "intent": {
+                "objective": "Custom",
+                "scope": "semantic_bundle",
+                "reversibility": "REVERSIBLE",
+                "side_effect_tolerance": "LOW",
+            },
+            "aspects": ["MIND", "LIGHT"],
+            "causal_root_cast_id": "01ABC",
+        },
+    )
+    div = [r for r in out["recommendations"] if r["bundle_id"] == "divination_gate"]
+    assert div and div[0]["match_kind"] == "advisory"
+
+
+def test_recommend_no_match_for_unrelated_decide():
+    out = recommend_for_plain_invocation(
+        "decide",
+        {
+            "intent": {
+                "objective": "Unrelated work",
+                "scope": "other",
+                "reversibility": "IRREVERSIBLE",
+                "side_effect_tolerance": "HIGH",
+            },
+            "aspects": ["VOID"],
+        },
+    )
+    assert out["recommendations"] == []
+
+
+def test_recommend_non_decide_skill_empty():
+    out = recommend_for_plain_invocation("cast", {"aspects": ["MIND"], "objective": "x", "scope": "s"})
+    assert out["recommendations"] == []
 
 
 def test_resolve_tool_invocation_decide_to_cast(monkeypatch):

@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, urlparse
 
 from vermyth.adapters.a2a import TaskGateway, build_agent_card
 from vermyth.arcane.discovery import inspect_semantic_bundle_detail, list_bundle_catalog
+from vermyth.arcane.recommend import recommend_for_plain_invocation
 from vermyth.arcane.invoke import attach_arcane_provenance, resolve_tool_invocation
 from vermyth.adapters.auth import resolve_principal
 from vermyth.bootstrap import build_tools
@@ -149,6 +150,27 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
             reset_correlation_id(corr_tok)
 
     def _handle_post_inner(self) -> None:
+        if self.path == "/arcane/recommend":
+            size = int(self.headers.get("Content-Length", "0") or 0)
+            raw = self.rfile.read(size) if size > 0 else b"{}"
+            try:
+                payload = json.loads(raw.decode("utf-8"))
+                if not isinstance(payload, dict):
+                    raise ValueError("JSON body must be an object")
+                skill_id = str(payload.get("skill_id", "decide"))
+                inp = dict(payload.get("input") or {})
+                ms = payload.get("min_strength")
+                if ms is not None:
+                    result = recommend_for_plain_invocation(
+                        skill_id, inp, min_strength=float(ms)
+                    )
+                else:
+                    result = recommend_for_plain_invocation(skill_id, inp)
+            except Exception as exc:
+                _json_response(self, 400, {"error": str(exc)})
+                return
+            _json_response(self, 200, result)
+            return
         if self.path == "/a2a/tasks":
             size = int(self.headers.get("Content-Length", "0") or 0)
             raw = self.rfile.read(size) if size > 0 else b"{}"

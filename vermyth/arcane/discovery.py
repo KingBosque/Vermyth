@@ -52,8 +52,24 @@ def _load_manifest_for_bundle(bundle_id: str) -> SemanticBundleManifest:
     return load_bundle(bundle_id, ver)
 
 
-def catalog_entry_dict(manifest: SemanticBundleManifest) -> dict[str, Any]:
+def load_primary_bundle_manifest(bundle_id: str) -> SemanticBundleManifest:
+    """Load manifest from the primary bundle JSON path (same resolution as catalog)."""
+    return _load_manifest_for_bundle(bundle_id)
+
+
+def _recommendation_catalog_hint(manifest: SemanticBundleManifest) -> dict[str, Any] | None:
+    spec = manifest.recommendation
+    if spec is None:
+        return None
     return {
+        "target_skills": list(spec.target_skills),
+        "tier_count": len(spec.tiers),
+        "match_kinds": [t.match_kind for t in spec.tiers],
+    }
+
+
+def catalog_entry_dict(manifest: SemanticBundleManifest) -> dict[str, Any]:
+    row: dict[str, Any] = {
         "bundle_id": manifest.id,
         "version": manifest.version,
         "kind": manifest.kind,
@@ -64,6 +80,10 @@ def catalog_entry_dict(manifest: SemanticBundleManifest) -> dict[str, Any]:
         "stability": manifest.stability or "stable",
         "target_skill": target_skill_for_kind(manifest.kind),
     }
+    hint = _recommendation_catalog_hint(manifest)
+    if hint is not None:
+        row["recommendation"] = hint
+    return row
 
 
 def list_bundle_catalog(

@@ -123,6 +123,7 @@ def test_handle_tools_list_tools():
         "compile_ritual",
         "list_semantic_bundles",
         "inspect_semantic_bundle",
+        "recommend_semantic_bundles",
         "events_tail",
         "cast",
         "fluid_cast",

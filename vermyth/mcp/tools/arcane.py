@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 from vermyth.arcane.compiler import compile_ritual_spec
 from vermyth.arcane.discovery import inspect_semantic_bundle_detail, list_bundle_catalog
 from vermyth.arcane.invoke import expand_to_invocation
+from vermyth.arcane.recommend import recommend_for_plain_invocation
 from vermyth.arcane.types import RitualSpec
 
 if TYPE_CHECKING:
@@ -36,7 +37,7 @@ TOOLS = [
     },
     {
         "name": "list_semantic_bundles",
-        "description": "List available semantic bundles (built-in and VERMYTH_ARCANE_BUNDLE_DIR) with summaries and target_skill.",
+        "description": "List available semantic bundles (built-in and VERMYTH_ARCANE_BUNDLE_DIR) with summaries and target_skill. Catalog rows may include a compact recommendation hint when the manifest declares recommendation tiers.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -59,6 +60,22 @@ TOOLS = [
                 "params": {"type": "object", "description": "Optional; omit for placeholder preview."},
             },
             "required": ["bundle_id", "version"],
+        },
+    },
+    {
+        "name": "recommend_semantic_bundles",
+        "description": "Advisory: suggest semantic bundles for plain skill_id + input using manifest-declared recommendation tiers (inspectable matched_features; no execution).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "skill_id": {"type": "string"},
+                "input": {"type": "object"},
+                "min_strength": {
+                    "type": "number",
+                    "description": "Optional floor 0..1 for suggestions (default 0.55).",
+                },
+            },
+            "required": ["skill_id", "input"],
         },
     },
 ]
@@ -138,9 +155,37 @@ def dispatch_inspect_semantic_bundle(
     )
 
 
+def tool_recommend_semantic_bundles(
+    tools: "VermythTools",
+    *,
+    skill_id: str,
+    input: dict[str, Any],
+    min_strength: float | None = None,
+) -> dict[str, Any]:
+    _ = tools
+    if min_strength is not None:
+        return recommend_for_plain_invocation(
+            skill_id, input, min_strength=float(min_strength)
+        )
+    return recommend_for_plain_invocation(skill_id, input)
+
+
+def dispatch_recommend_semantic_bundles(
+    tools: "VermythTools", arguments: dict[str, Any]
+) -> dict[str, Any]:
+    ms = arguments.get("min_strength")
+    return tool_recommend_semantic_bundles(
+        tools,
+        skill_id=str(arguments.get("skill_id", "decide")),
+        input=dict(arguments.get("input") or {}),
+        min_strength=float(ms) if ms is not None else None,
+    )
+
+
 DISPATCH = {
     "expand_semantic_bundle": dispatch_expand_semantic_bundle,
     "compile_ritual": dispatch_compile_ritual,
     "list_semantic_bundles": dispatch_list_semantic_bundles,
     "inspect_semantic_bundle": dispatch_inspect_semantic_bundle,
+    "recommend_semantic_bundles": dispatch_recommend_semantic_bundles,
 }

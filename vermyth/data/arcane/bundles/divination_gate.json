@@ -10,6 +10,74 @@
   ],
   "stability": "stable",
   "param_keys": ["topic"],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "Expansion injects __require_causal_root__ and divination metadata consistently; easier to audit than scattering flags across hand-written JSON.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.96,
+        "require_all": [
+          {
+            "op": "aspects_eq",
+            "value": ["MIND", "LIGHT"],
+            "rule_id": "aspects"
+          },
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "semantic_bundle",
+              "reversibility": "REVERSIBLE",
+              "side_effect_tolerance": "LOW"
+            },
+            "rule_id": "intent_shape"
+          },
+          {
+            "op": "objective_starts_with",
+            "value": "Divination gate on ",
+            "rule_id": "objective_prefix"
+          },
+          {
+            "op": "field_eq",
+            "path": "__require_causal_root__",
+            "value": true,
+            "rule_id": "require_root"
+          }
+        ]
+      },
+      {
+        "match_kind": "advisory",
+        "strength": 0.72,
+        "require_all": [
+          {
+            "op": "aspects_eq",
+            "value": ["MIND", "LIGHT"],
+            "rule_id": "aspects"
+          },
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "semantic_bundle",
+              "reversibility": "REVERSIBLE",
+              "side_effect_tolerance": "LOW"
+            },
+            "rule_id": "intent_shape"
+          },
+          {
+            "op": "field_present",
+            "path": "causal_root_cast_id",
+            "rule_id": "has_causal_id"
+          },
+          {
+            "op": "objective_starts_with",
+            "value": "Divination gate on ",
+            "negate": true,
+            "rule_id": "custom_objective"
+          }
+        ]
+      }
+    ]
+  },
   "template": {
     "intent": {
       "objective": "Divination gate on {topic}",

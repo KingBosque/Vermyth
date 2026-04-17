@@ -123,6 +123,13 @@ This document defines **computational** semantics for arcane vocabulary. Names m
 - **Compiles into:** `skill_id` + `input` for `decide`/`cast`/`compile_program` with `arcane_provenance` for inspection.
 - **Fallback:** Omit extension; use plain `skill_id` + `input`.
 
+### Bundle manifest `recommendation` (optional, advisory)
+
+- **Kind:** Structured metadata on `SemanticBundleManifest` (`BundleRecommendationSpec`).
+- **Purpose:** Deterministic, inspectable hints for which plain `skill_id` + `input` shapes may benefit from adopting a `semantic_bundle` ref. Evaluated only by `recommend_semantic_bundles` / `POST /arcane/recommend`; **never** applied automatically on invoke.
+- **Shape:** `target_skills` (e.g. `decide`), human-readable `why_better`, and ordered `tiers` (first match wins). Each tier lists `require_all` rules with explicit `op` names implemented in [`vermyth/arcane/recommend.py`](../../vermyth/arcane/recommend.py) (`RULE_OPS`).
+- **Fallback:** Bundles omit `recommendation`; they remain listable and usable without advisory matching.
+
 ## Deprecations
 
 - None in this release; decorative items are **labeled**, not removed.

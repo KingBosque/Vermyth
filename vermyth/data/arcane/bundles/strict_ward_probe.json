@@ -10,6 +10,45 @@
   ],
   "stability": "stable",
   "param_keys": ["topic"],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "The bundle locks ward thresholds next to the intent so policy gates cannot silently drift from copy-paste edits.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.94,
+        "require_all": [
+          {
+            "op": "aspects_eq",
+            "value": ["MIND"],
+            "rule_id": "aspects"
+          },
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "semantic_bundle",
+              "reversibility": "REVERSIBLE",
+              "side_effect_tolerance": "LOW"
+            },
+            "rule_id": "intent_shape"
+          },
+          {
+            "op": "thresholds_eq",
+            "value": {
+              "allow_min_resonance": 0.92,
+              "effect_risk_min_score": 0.95
+            },
+            "rule_id": "ward_thresholds"
+          },
+          {
+            "op": "objective_starts_with",
+            "value": "Warded coherence probe on ",
+            "rule_id": "objective_prefix"
+          }
+        ]
+      }
+    ]
+  },
   "template": {
     "intent": {
       "objective": "Warded coherence probe on {topic}",
