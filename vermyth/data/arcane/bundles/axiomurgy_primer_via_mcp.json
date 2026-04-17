@@ -1,0 +1,54 @@
+{
+  "id": "axiomurgy_primer_via_mcp",
+  "version": 1,
+  "kind": "decide",
+  "library": "canonical",
+  "summary": "Axiomurgy example: primer_via_mcp.spell.json (MCP resources + tools)",
+  "description": "Same risk/write mapping as other medium primer spells; scope axiomurgy:primer_via_mcp_v0_6.",
+  "recommended_for": ["examples/primer_via_mcp.spell.json"],
+  "stability": "stable",
+  "param_keys": [],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "Separates MCP-mediated primer workflows from file-read primer paths for advisory matching.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.91,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:primer_via_mcp_v0_6",
+              "reversibility": "PARTIAL",
+              "side_effect_tolerance": "MEDIUM"
+            },
+            "rule_id": "primer_mcp_intent"
+          }
+        ]
+      },
+      {
+        "match_kind": "advisory",
+        "strength": 0.58,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:primer_via_mcp_v0_6"
+            },
+            "rule_id": "scope_only"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "intent": {
+      "objective": "Primer via MCP resources and tools",
+      "scope": "axiomurgy:primer_via_mcp_v0_6",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "aspects": ["MIND", "VOID", "FORM"]
+  }
+}

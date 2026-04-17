@@ -1,0 +1,54 @@
+{
+  "id": "axiomurgy_primer_codex_publish",
+  "version": 1,
+  "kind": "decide",
+  "library": "canonical",
+  "summary": "Axiomurgy example: publish_codex.spell.json (spellbook primer codex)",
+  "description": "Matches spell name primer_codex_publish_v0_6; medium risk + write -> PARTIAL / MEDIUM.",
+  "recommended_for": ["spellbooks/primer_codex/spells/publish_codex.spell.json"],
+  "stability": "stable",
+  "param_keys": [],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "Spellbook-packaged codex publish path; scope distinct from examples/ primer files.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.91,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:primer_codex_publish_v0_6",
+              "reversibility": "PARTIAL",
+              "side_effect_tolerance": "MEDIUM"
+            },
+            "rule_id": "codex_publish_intent"
+          }
+        ]
+      },
+      {
+        "match_kind": "advisory",
+        "strength": 0.58,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:primer_codex_publish_v0_6"
+            },
+            "rule_id": "scope_only"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "intent": {
+      "objective": "Publish primer codex with proof-carrying witnesses",
+      "scope": "axiomurgy:primer_codex_publish_v0_6",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "aspects": ["MIND", "LIGHT", "DECAY"]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "axiomurgy_ouroboros_score_fixture_v12",
+  "version": 1,
+  "kind": "decide",
+  "library": "canonical",
+  "summary": "Axiomurgy example: ouroboros_score_fixture_v12.spell.json",
+  "description": "Same low-risk write mapping as v1 fixture; scope axiomurgy:ouroboros_score_fixture_v12.",
+  "recommended_for": ["examples/ouroboros_score_fixture_v12.spell.json"],
+  "stability": "stable",
+  "param_keys": [],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "v1.2 mutation-family coverage spell; separate bundle id avoids conflating with v1 score fixture.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.89,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:ouroboros_score_fixture_v12",
+              "reversibility": "PARTIAL",
+              "side_effect_tolerance": "MEDIUM"
+            },
+            "rule_id": "ouroboros_v12_intent"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "intent": {
+      "objective": "Ouroboros score fixture v1.2",
+      "scope": "axiomurgy:ouroboros_score_fixture_v12",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "aspects": ["VOID", "FORM", "MOTION"]
+  }
+}

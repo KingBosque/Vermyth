@@ -1,0 +1,54 @@
+{
+  "id": "axiomurgy_primer_to_axioms",
+  "version": 1,
+  "kind": "decide",
+  "library": "canonical",
+  "summary": "Axiomurgy example: primer_to_axioms.spell.json (primer synthesis + publish)",
+  "description": "Matches spell_level intent: medium risk + write -> PARTIAL / MEDIUM; scope axiomurgy:primer_to_axioms_v0_6.",
+  "recommended_for": ["examples/primer_to_axioms.spell.json"],
+  "stability": "stable",
+  "param_keys": [],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "Curriculum-scale primer ingestion distinct from inbox or OpenAPI; intent-only scope lock for Axiomurgy recommend probes.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.91,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:primer_to_axioms_v0_6",
+              "reversibility": "PARTIAL",
+              "side_effect_tolerance": "MEDIUM"
+            },
+            "rule_id": "primer_axioms_intent"
+          }
+        ]
+      },
+      {
+        "match_kind": "advisory",
+        "strength": 0.58,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:primer_to_axioms_v0_6"
+            },
+            "rule_id": "scope_only"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "intent": {
+      "objective": "Primer codex: read primers, synthesize, publish validators",
+      "scope": "axiomurgy:primer_to_axioms_v0_6",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "aspects": ["MIND", "LIGHT", "FORM"]
+  }
+}

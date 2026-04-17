@@ -1,0 +1,41 @@
+{
+  "id": "axiomurgy_ouroboros_score_fixture",
+  "version": 1,
+  "kind": "decide",
+  "library": "canonical",
+  "summary": "Axiomurgy example: ouroboros_score_fixture.spell.json (low-risk score write)",
+  "description": "Low risk + write -> PARTIAL / MEDIUM per spell_level_vermyth_intent; scope axiomurgy:ouroboros_score_fixture.",
+  "recommended_for": ["examples/ouroboros_score_fixture.spell.json"],
+  "stability": "stable",
+  "param_keys": [],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "Isolated Ouroboros chamber fixture; distinct scopes from primer or inbox manifests.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.89,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:ouroboros_score_fixture",
+              "reversibility": "PARTIAL",
+              "side_effect_tolerance": "MEDIUM"
+            },
+            "rule_id": "ouroboros_fixture_intent"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "intent": {
+      "objective": "Ouroboros score fixture write",
+      "scope": "axiomurgy:ouroboros_score_fixture",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "aspects": ["VOID", "FORM", "MOTION"]
+  }
+}
