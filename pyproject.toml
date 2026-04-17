@@ -28,10 +28,22 @@ bench-osworld = []
 a2a-crypto = [
     "cryptography>=42",
 ]
+# Official A2A JSON-RPC server (Starlette) + canonical types; optional edge surface.
+a2a = [
+    "a2a-sdk[http-server]>=0.3.26,<0.4",
+    "uvicorn[standard]>=0.27",
+]
+# Real benchmark harness (network I/O + artifacts); drivers not bundled.
+bench-real = []
+# Optional JWT validation for production-style Bearer (HS256/RS256 stubs via PyJWT).
+auth-jwt = [
+    "PyJWT>=2.8",
+]
 
 [project.scripts]
 vermyth = "vermyth.cli.main:main"
 vermyth-mcp = "vermyth.mcp.server:main"
+vermyth-a2a = "vermyth.adapters.a2a_server:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -45,4 +57,4 @@ where = ["."]
 include = ["vermyth*"]
 
 [tool.setuptools.package-data]
-vermyth = ["data/sigils/*.json", "grimoire/migrations/*.sql"]
+vermyth = ["data/sigils/*.json", "data/arcane/bundles/*.json", "grimoire/migrations/*.sql"]

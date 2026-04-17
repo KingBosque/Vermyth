@@ -119,6 +119,8 @@ def test_handle_tools_list_tools():
     names = [t["name"] for t in tools]
     assert names == [
         "decide",
+        "expand_semantic_bundle",
+        "compile_ritual",
         "events_tail",
         "cast",
         "fluid_cast",
@@ -146,6 +148,7 @@ def test_handle_tools_list_tools():
         "execute_program",
         "execution_status",
         "execution_receipt",
+        "verify_execution_receipt",
         "list_programs",
         "program_status",
         "accept_genesis",

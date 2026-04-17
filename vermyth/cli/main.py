@@ -199,6 +199,8 @@ class VermythCLI(CLIContract):
         return program_command.cmd_execution_status(self, execution_id)
     def cmd_execution_receipt(self, execution_id: str) -> None:
         return program_command.cmd_execution_receipt(self, execution_id)
+    def cmd_receipt_verify(self, path: str, public_pem_path: str | None) -> None:
+        return program_command.cmd_receipt_verify(self, path, public_pem_path)
     def cmd_propose_genesis(
         self,
         *,

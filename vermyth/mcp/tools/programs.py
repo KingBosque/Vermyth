@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING, Any
 
-from vermyth.schema import ProgramExecution, SemanticProgram
+from vermyth.engine.operations import program_validation as program_validation_ops
+from vermyth.receipt_signing import verify_receipt_signature
+from vermyth.schema import ExecutionReceipt, ProgramExecution, SemanticProgram
 
 if TYPE_CHECKING:
     from vermyth.mcp.tools.facade import VermythTools
@@ -27,6 +30,14 @@ TOOLS = [{'name': 'compile_program',
   'inputSchema': {'type': 'object',
                   'properties': {'execution_id': {'type': 'string'}},
                   'required': ['execution_id']}},
+ {'name': 'verify_execution_receipt',
+  'description': 'Verify Ed25519 signature on an execution receipt (requires a2a-crypto).',
+  'inputSchema': {'type': 'object',
+                  'properties': {
+                      'receipt': {'type': 'object'},
+                      'public_pem': {'type': 'string'},
+                  },
+                  'required': ['receipt']}},
  {'name': 'list_programs',
   'description': 'List stored semantic programs.',
   'inputSchema': {'type': 'object', 'properties': {'limit': {'type': 'integer'}}, 'required': []}},
@@ -69,7 +80,14 @@ def tool_compile_program(tools: "VermythTools", payload: dict[str, Any]) -> dict
     program = SemanticProgram.model_validate(payload)
     compiled = tools._engine.compile_program(program)
     tools._grimoire.write_program(compiled)
-    return program_to_dict(compiled)
+    rep = program_validation_ops.validate_program(compiled)
+    out = program_to_dict(compiled)
+    out["validation"] = {
+        "ok": rep.ok,
+        "errors": list(rep.errors),
+        "warnings": list(rep.warnings),
+    }
+    return out
 
 
 def tool_execute_program(tools: "VermythTools", program_id: str) -> dict[str, Any]:
@@ -100,6 +118,20 @@ def tool_execution_status(tools: "VermythTools", execution_id: str) -> dict[str,
 def tool_execution_receipt(tools: "VermythTools", execution_id: str) -> dict[str, Any]:
     receipt = tools._grimoire.read_execution_receipt_by_execution(execution_id)
     return receipt.model_dump(mode="json")
+
+
+def tool_verify_execution_receipt(
+    tools: "VermythTools",
+    receipt: dict[str, Any],
+    public_pem: str | None = None,
+) -> dict[str, Any]:
+    _ = tools
+    pem = public_pem or os.environ.get("VERMYTH_RECEIPT_VERIFY_PUBLIC_KEY")
+    if not pem:
+        raise ValueError("public_pem or VERMYTH_RECEIPT_VERIFY_PUBLIC_KEY (PEM) required")
+    r = ExecutionReceipt.model_validate(receipt)
+    ok = verify_receipt_signature(r, public_pem=pem)
+    return {"valid": bool(ok), "signing_key_id": r.signing_key_id}
 
 
 def dispatch_compile_program(
@@ -138,11 +170,22 @@ def dispatch_execution_receipt(
     return tool_execution_receipt(tools, execution_id=arguments.get("execution_id", ""))
 
 
+def dispatch_verify_execution_receipt(
+    tools: "VermythTools", arguments: dict[str, Any]
+) -> dict[str, Any]:
+    return tool_verify_execution_receipt(
+        tools,
+        arguments.get("receipt", {}),
+        public_pem=arguments.get("public_pem"),
+    )
+
+
 DISPATCH = {
     "compile_program": dispatch_compile_program,
     "execute_program": dispatch_execute_program,
     "execution_status": dispatch_execution_status,
     "execution_receipt": dispatch_execution_receipt,
+    "verify_execution_receipt": dispatch_verify_execution_receipt,
     "list_programs": dispatch_list_programs,
     "program_status": dispatch_program_status,
 }

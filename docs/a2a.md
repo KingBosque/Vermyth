@@ -1,13 +1,15 @@
 # A2A-shaped adapter
 
-Vermyth exposes a minimal **outer boundary** for agent-style task exchange in `vermyth/adapters/a2a/`. The wire format is intentionally simple JSON; it is not a full A2A protocol implementation.
+Vermyth exposes a minimal **outer boundary** for agent-style task exchange in `vermyth/adapters/a2a/`. The default HTTP surface is a simple JSON task API (`POST /a2a/tasks`). For a **standards-aligned** JSON-RPC + SDK path (`a2a-sdk`), optional extra **`[a2a]`** and compatibility notes, see [`docs/a2a-compatibility.md`](a2a-compatibility.md).
 
 ## Agent card
 
-`GET /.well-known/agent.json` returns a JSON object:
+`GET /.well-known/agent.json` (and `/.well-known/agent-card.json`) returns a JSON object:
 
 - `name`, `version`, `description`
 - `skills`: list of `{ id, name, description }` derived from MCP `TOOL_DEFINITIONS` (each tool name is a skill id).
+
+The optional SDK builds a richer `AgentCard` (capabilities, security schemes, extensions) when using `vermyth-a2a` — see [`docs/a2a-compatibility.md`](a2a-compatibility.md).
 
 ## Task dispatch
 
@@ -19,6 +21,10 @@ Vermyth exposes a minimal **outer boundary** for agent-style task exchange in `v
 | `skill_id` | string | **Required.** Must match a Vermyth tool name (e.g. `decide`, `cast`). |
 | `input` | object | **Required.** Passed to the tool handler as `arguments` (same shape as MCP `tools/call`). |
 | `messages` | array (optional) | Reserved for future use. |
+
+Send **`Idempotency-Key`** on HTTP to reuse a prior result for the same payload (replay-safe retries).
+
+**Semantic bundles:** `input` may include `semantic_bundle` (`bundle_id`, `version`, `params`); the gateway expands it before dispatch (same as [`resolve_tool_invocation`](../vermyth/arcane/invoke.py)). MCP `tools/call` and HTTP `POST /tools/<name>` use the same expansion so bundle behavior matches tasks. See [`docs/http_adapter.md`](http_adapter.md).
 
 Response shape **TaskResult**:
 

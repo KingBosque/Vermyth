@@ -13,6 +13,7 @@ from typing import Any, BinaryIO, TextIO
 
 from vermyth.mcp.binary_transport import FrameType, decode_frame_from_buffer, encode_frame
 
+from vermyth.arcane.invoke import attach_arcane_provenance, resolve_tool_invocation
 from vermyth.bootstrap import build_tools, build_tools_from_env
 from vermyth.engine.projection_backends import NullProjectionBackend
 from vermyth.engine.resonance import ResonanceEngine
@@ -33,6 +34,7 @@ from vermyth.mcp.protocol import (
     make_error,
     make_success,
 )
+from vermyth.mcp.tools import arcane as arcane_tools
 from vermyth.mcp.tools import casting as casting_tools
 from vermyth.mcp.tools import causal as causal_tools
 from vermyth.mcp.tools import decisions as decision_tools
@@ -54,6 +56,7 @@ _ENABLE_EXPERIMENTAL = bool(
 
 TOOL_DISPATCH = {
     **casting_tools.DISPATCH,
+    **arcane_tools.DISPATCH,
     **decision_tools.DISPATCH,
     **observability_tools.DISPATCH,
     **drift_tools.DISPATCH,
@@ -233,19 +236,26 @@ class VermythMCPServer:
                     continue
                 tool = payload_obj.get("tool")
                 args = payload_obj.get("arguments", {})
+                if not isinstance(args, dict):
+                    args = {}
                 try:
                     binary_handler = (
                         session_tools.BINARY_DISPATCH.get(str(tool))
                         if _ENABLE_EXPERIMENTAL
                         else None
                     )
-                    self._tools.enforce_tool_scope(str(tool))
                     if binary_handler is not None:
+                        self._tools.enforce_tool_scope(str(tool))
                         result = binary_handler(self._tools, args)
-                    elif str(tool) in TOOL_DISPATCH:
-                        result = TOOL_DISPATCH[str(tool)](self._tools, args)
                     else:
-                        raise ValueError(f"unknown tool: {tool}")
+                        resolved_tool, merged_args, arc_prov = resolve_tool_invocation(
+                            str(tool), args
+                        )
+                        self._tools.enforce_tool_scope(resolved_tool)
+                        if resolved_tool not in TOOL_DISPATCH:
+                            raise ValueError(f"unknown tool: {resolved_tool}")
+                        result = TOOL_DISPATCH[resolved_tool](self._tools, merged_args)
+                        result = attach_arcane_provenance(result, arc_prov)
                     self._bin_out.write(encode_frame(FrameType.RESPONSE, json.dumps(result).encode("utf-8")))
                     self._bin_out.flush()
                 except Exception as exc:
@@ -359,6 +369,15 @@ class VermythMCPServer:
         params = get_params(message)
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
+        if not isinstance(arguments, dict):
+            self._send(
+                make_error(
+                    msg_id,
+                    ERROR_INVALID_PARAMS,
+                    "arguments must be an object",
+                )
+            )
+            return
         self._log(f"tool call: {tool_name}")
 
         if self._tools is None:
@@ -372,18 +391,22 @@ class VermythMCPServer:
             return
 
         try:
-            handler = TOOL_DISPATCH.get(str(tool_name))
+            resolved_name, merged_args, arc_prov = resolve_tool_invocation(
+                str(tool_name), arguments
+            )
+            handler = TOOL_DISPATCH.get(resolved_name)
             if handler is None:
                 self._send(
                     make_error(
                         msg_id,
                         ERROR_METHOD_NOT_FOUND,
-                        f"Unknown tool: {tool_name}",
+                        f"Unknown tool: {resolved_name}",
                     )
                 )
                 return
-            self._tools.enforce_tool_scope(str(tool_name))
-            result = handler(self._tools, arguments)
+            self._tools.enforce_tool_scope(resolved_name)
+            result = handler(self._tools, merged_args)
+            result = attach_arcane_provenance(result, arc_prov)
             self._send(make_success(msg_id, result))
 
         except ValueError as e:

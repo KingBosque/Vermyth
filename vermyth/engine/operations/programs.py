@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import os
 import time
 from datetime import datetime, timezone
 from typing import Any
 
 from ulid import ULID
 
+from vermyth.engine.operations import program_validation as program_validation_ops
+from vermyth.receipt_signing import sign_receipt_if_configured
+from vermyth.runtime_context import get_correlation_id, get_principal_id
 from vermyth.registry import AspectRegistry
 from vermyth.schema import (
     CastNode,
@@ -43,6 +47,9 @@ def topological_order(
 
 
 def compile_program(engine, program: SemanticProgram) -> SemanticProgram:
+    report = program_validation_ops.validate_program(program)
+    if report.errors:
+        raise ValueError("program validation failed: " + "; ".join(report.errors))
     nodes = {n.node_id: n for n in program.nodes}
     predecessors: dict[str, list[str]] = {nid: [] for nid in nodes}
     for node in program.nodes:
@@ -69,6 +76,9 @@ def execute_program(engine, program: SemanticProgram) -> ProgramExecution:
     compiled = (
         program if program.status == ProgramStatus.COMPILED else compile_program(engine, program)
     )
+    vrep = program_validation_ops.validate_program(compiled)
+    if vrep.warnings and bool(int(os.environ.get("VERMYTH_DENY_PROGRAM_VALIDATION_WARNINGS", "0") or "0")):
+        raise ValueError("program validation warnings: " + "; ".join(vrep.warnings))
     nodes = {n.node_id: n for n in compiled.nodes}
     predecessors: dict[str, list[str]] = {nid: [] for nid in nodes}
     for node in compiled.nodes:
@@ -346,12 +356,18 @@ def execute_program(engine, program: SemanticProgram) -> ProgramExecution:
         completed_at=completed_at,
         branch_id=branch_id,
     )
-    engine._last_execution_receipt = ExecutionReceipt(
-        execution_id=execution.execution_id,
-        program_id=compiled.program_id,
-        status=status,
-        nodes=receipt_nodes,
-        started_at=started_at,
-        completed_at=completed_at,
+    arc_meta = compiled.metadata.get("arcane")
+    engine._last_execution_receipt = sign_receipt_if_configured(
+        ExecutionReceipt(
+            execution_id=execution.execution_id,
+            program_id=compiled.program_id,
+            status=status,
+            nodes=receipt_nodes,
+            started_at=started_at,
+            completed_at=completed_at,
+            correlation_id=get_correlation_id(),
+            principal_id=get_principal_id(),
+            arcane_provenance=dict(arc_meta) if isinstance(arc_meta, dict) else None,
+        )
     )
     return execution

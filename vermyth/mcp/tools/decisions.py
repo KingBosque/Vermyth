@@ -53,8 +53,15 @@ TOOLS = [
                     "enum": ["rule_based", "threshold_tuned"],
                 },
                 "tuned_thresholds_path": {"type": "string"},
+                "semantic_bundle": {
+                    "type": "object",
+                    "description": "Optional named bundle {bundle_id, version, params}; expanded before dispatch (MCP/HTTP /tools parity with /a2a/tasks).",
+                },
             },
-            "required": ["intent"],
+            "anyOf": [
+                {"required": ["intent"]},
+                {"required": ["semantic_bundle"]},
+            ],
         },
     }
 ]
@@ -84,7 +91,12 @@ def tool_decide(
     effects: list[dict[str, Any]] | None = None,
     policy_model: str | None = None,
     tuned_thresholds_path: str | None = None,
+    __require_causal_root__: bool | None = None,
 ) -> dict[str, Any]:
+    if __require_causal_root__ and not causal_root_cast_id:
+        raise ValueError(
+            "divination gate: causal_root_cast_id required when ritual/bundle requires causal context"
+        )
     intent_obj = Intent.model_validate(intent)
     resolved_aspects = None
     if aspects is not None:
@@ -138,17 +150,20 @@ def tool_decide(
 
 
 def dispatch_decide(tools: "VermythTools", arguments: dict[str, Any]) -> dict[str, Any]:
+    args = dict(arguments)
+    req = args.pop("__require_causal_root__", None)
     return tool_decide(
         tools,
-        intent=_resolve_intent(arguments),
-        aspects=arguments.get("aspects"),
-        vector=arguments.get("vector"),
-        parent_cast_id=arguments.get("parent_cast_id"),
-        causal_root_cast_id=arguments.get("causal_root_cast_id"),
-        thresholds=arguments.get("thresholds"),
-        effects=arguments.get("effects"),
-        policy_model=arguments.get("policy_model"),
-        tuned_thresholds_path=arguments.get("tuned_thresholds_path"),
+        intent=_resolve_intent(args),
+        aspects=args.get("aspects"),
+        vector=args.get("vector"),
+        parent_cast_id=args.get("parent_cast_id"),
+        causal_root_cast_id=args.get("causal_root_cast_id"),
+        thresholds=args.get("thresholds"),
+        effects=args.get("effects"),
+        policy_model=args.get("policy_model"),
+        tuned_thresholds_path=args.get("tuned_thresholds_path"),
+        __require_causal_root__=bool(req) if req is not None else None,
     )
 
 

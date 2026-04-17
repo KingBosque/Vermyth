@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -65,6 +66,24 @@ def cmd_execution_receipt(cli: "VermythCLI", execution_id: str) -> None:
         sys.exit(1)
 
 
+def cmd_receipt_verify(cli: "VermythCLI", path: str, public_pem_path: str | None) -> None:
+    try:
+        raw = Path(path).read_text(encoding="utf-8")
+        receipt = json.loads(raw)
+        pem: str | None = None
+        if public_pem_path:
+            pem = Path(public_pem_path).read_text(encoding="utf-8")
+        elif os.environ.get("VERMYTH_RECEIPT_VERIFY_PUBLIC_KEY"):
+            pem = os.environ["VERMYTH_RECEIPT_VERIFY_PUBLIC_KEY"]
+        out = cli._tools.tool_verify_execution_receipt(receipt, public_pem=pem)
+        print(out)
+        if not out.get("valid"):
+            sys.exit(1)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(1)
+
+
 def register_subparsers(subs: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     cp = subs.add_parser("compile-program", help="Compile a semantic program JSON.")
     cp.add_argument("path", metavar="PATH")
@@ -83,6 +102,18 @@ def register_subparsers(subs: argparse._SubParsersAction[argparse.ArgumentParser
 
     er = subs.add_parser("execution-receipt", help="Show execution receipt details.")
     er.add_argument("execution_id", metavar="EXECUTION_ID")
+
+    rv = subs.add_parser(
+        "receipt-verify",
+        help="Verify Ed25519 signature on a receipt JSON file (needs a2a-crypto).",
+    )
+    rv.add_argument("path", metavar="PATH", help="Path to receipt JSON.")
+    rv.add_argument(
+        "--public-key",
+        dest="public_pem_path",
+        default=None,
+        help="Path to PEM public key (else VERMYTH_RECEIPT_VERIFY_PUBLIC_KEY).",
+    )
 
 
 def _dispatch_compile_program(cli: "VermythCLI", ns: argparse.Namespace) -> None:
@@ -109,6 +140,10 @@ def _dispatch_execution_receipt(cli: "VermythCLI", ns: argparse.Namespace) -> No
     cli.cmd_execution_receipt(execution_id=ns.execution_id)
 
 
+def _dispatch_receipt_verify(cli: "VermythCLI", ns: argparse.Namespace) -> None:
+    cli.cmd_receipt_verify(path=ns.path, public_pem_path=ns.public_pem_path)
+
+
 DISPATCH = {
     "compile-program": _dispatch_compile_program,
     "execute-program": _dispatch_execute_program,
@@ -116,4 +151,5 @@ DISPATCH = {
     "list-programs": _dispatch_list_programs,
     "execution-status": _dispatch_execution_status,
     "execution-receipt": _dispatch_execution_receipt,
+    "receipt-verify": _dispatch_receipt_verify,
 }

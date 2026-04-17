@@ -153,6 +153,31 @@ def test_capability_token_invalid_hmac_signature(make_tools, monkeypatch):
     assert "invalid capability token signature" in out["error"]
 
 
+def test_a2a_idempotency_returns_cached_result(make_tools, monkeypatch):
+    store: dict[str, dict] = {}
+    gateway = TaskGateway(
+        tools=make_tools,
+        tool_dispatch=TOOL_DISPATCH,
+        idempotency_store=store,
+    )
+    payload = {
+        "skill_id": "decide",
+        "input": {
+            "intent": {
+                "objective": "x",
+                "scope": "y",
+                "reversibility": "REVERSIBLE",
+                "side_effect_tolerance": "LOW",
+            },
+            "aspects": ["MIND"],
+        },
+    }
+    a = gateway.execute_task(payload, idempotency_key="idem-1")
+    b = gateway.execute_task(payload, idempotency_key="idem-1")
+    assert a == b
+    assert len(store) == 1
+
+
 def test_capability_token_ed25519_round_trip(make_tools, monkeypatch):
     pytest.importorskip("cryptography")
     from cryptography.hazmat.primitives import serialization

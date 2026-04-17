@@ -7,7 +7,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
 from vermyth.adapters.a2a import TaskGateway, build_agent_card
+from vermyth.arcane.invoke import attach_arcane_provenance, resolve_tool_invocation
+from vermyth.adapters.auth import resolve_principal
 from vermyth.bootstrap import build_tools
+from vermyth.runtime_context import (
+    reset_correlation_id,
+    reset_principal_id,
+    set_correlation_id,
+    set_principal_id,
+)
 from vermyth.mcp.server import TOOL_DISPATCH
 from vermyth.mcp.tool_definitions import TOOL_DEFINITIONS
 
@@ -26,6 +34,7 @@ def _json_response(handler: BaseHTTPRequestHandler, status: int, payload: dict[s
 
 class VermythHTTPHandler(BaseHTTPRequestHandler):
     tools = None
+    _idempotency_store: dict[str, dict[str, Any]] = {}
 
     def _authorized(self) -> bool:
         expected = os.getenv("VERMYTH_HTTP_TOKEN")
@@ -42,14 +51,17 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
         cors = os.getenv("VERMYTH_HTTP_CORS")
         if cors:
             self.send_header("Access-Control-Allow-Origin", cors)
-            self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+            self.send_header(
+                "Access-Control-Allow-Headers",
+                "Authorization, Content-Type, Idempotency-Key, X-Request-ID, X-Correlation-ID",
+            )
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.end_headers()
 
     def do_GET(self) -> None:  # noqa: N802
         if not self._authorized():
             return
-        if self.path == "/.well-known/agent.json":
+        if self.path in ("/.well-known/agent.json", "/.well-known/agent-card.json"):
             card = build_agent_card(TOOL_DEFINITIONS)
             _json_response(self, 200, card.model_dump(mode="json"))
             return
@@ -89,13 +101,34 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         if not self._authorized():
             return
+        cid = self.headers.get("X-Request-ID") or self.headers.get("X-Correlation-ID")
+        corr_tok = set_correlation_id(cid)
+        principal = resolve_principal(authorization=self.headers.get("Authorization"))
+        pid = (
+            None
+            if principal.auth_method in ("none", "bearer_opaque")
+            else principal.subject
+        )
+        pri_tok = set_principal_id(pid)
+        try:
+            self._handle_post_inner()
+        finally:
+            reset_principal_id(pri_tok)
+            reset_correlation_id(corr_tok)
+
+    def _handle_post_inner(self) -> None:
         if self.path == "/a2a/tasks":
             size = int(self.headers.get("Content-Length", "0") or 0)
             raw = self.rfile.read(size) if size > 0 else b"{}"
+            idem = self.headers.get("Idempotency-Key")
             try:
                 payload = json.loads(raw.decode("utf-8"))
-                gateway = TaskGateway(tools=self.tools, tool_dispatch=TOOL_DISPATCH)
-                result = gateway.execute_task(payload)
+                gateway = TaskGateway(
+                    tools=self.tools,
+                    tool_dispatch=TOOL_DISPATCH,
+                    idempotency_store=self._idempotency_store,
+                )
+                result = gateway.execute_task(payload, idempotency_key=idem)
             except Exception as exc:
                 _json_response(self, 400, {"error": str(exc)})
                 return
@@ -105,10 +138,6 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
             _json_response(self, 404, {"error": "not_found"})
             return
         tool_name = self.path[len("/tools/") :]
-        handler = TOOL_DISPATCH.get(tool_name)
-        if handler is None:
-            _json_response(self, 404, {"error": "unknown_tool"})
-            return
         size = int(self.headers.get("Content-Length", "0") or 0)
         raw = self.rfile.read(size) if size > 0 else b"{}"
         try:
@@ -117,8 +146,16 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
                 payload = {}
             if not isinstance(payload, dict):
                 raise ValueError("JSON body must be an object")
-            self.tools.enforce_tool_scope(tool_name)
-            result = handler(self.tools, payload)
+            resolved_name, merged_args, arc_prov = resolve_tool_invocation(
+                tool_name, payload
+            )
+            handler = TOOL_DISPATCH.get(resolved_name)
+            if handler is None:
+                _json_response(self, 404, {"error": "unknown_tool"})
+                return
+            self.tools.enforce_tool_scope(resolved_name)
+            result = handler(self.tools, merged_args)
+            result = attach_arcane_provenance(result, arc_prov)
         except Exception as exc:
             _json_response(self, 400, {"error": str(exc)})
             return

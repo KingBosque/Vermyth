@@ -12,6 +12,7 @@ from vermyth.mcp.tools import query as query_tools
 from vermyth.mcp.tools import registry as registry_tools
 from vermyth.mcp.tools import seeds as seed_tools
 from vermyth.mcp.tools import swarm as swarm_tools
+from vermyth.mcp.tools import arcane as arcane_tools
 from vermyth.mcp.tools import observability as observability_tools
 
 _ENABLE_EXPERIMENTAL = bool(
@@ -20,6 +21,7 @@ _ENABLE_EXPERIMENTAL = bool(
 
 BASE_TOOL_DEFINITIONS = [
     *decision_tools.TOOLS,
+    *arcane_tools.TOOLS,
     *observability_tools.TOOLS,
     *casting_tools.TOOLS,
     *query_tools.TOOLS,

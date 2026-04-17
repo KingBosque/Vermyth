@@ -47,6 +47,7 @@ def test_cli_families_register_all_commands() -> None:
         "list-programs",
         "execution-status",
         "execution-receipt",
+        "receipt-verify",
         "propose-genesis",
         "genesis-proposals",
         "accept-genesis",

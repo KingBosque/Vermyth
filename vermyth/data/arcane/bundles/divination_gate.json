@@ -1,0 +1,18 @@
+{
+  "id": "divination_gate",
+  "version": 1,
+  "kind": "decide",
+  "param_keys": ["topic"],
+  "template": {
+    "intent": {
+      "objective": "Divination gate on {topic}",
+      "scope": "semantic_bundle",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "aspects": ["MIND", "LIGHT"],
+    "_divination": {
+      "require_causal_context": true
+    }
+  }
+}

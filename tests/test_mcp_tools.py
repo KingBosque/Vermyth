@@ -1,5 +1,6 @@
 import io
 import json
+from pathlib import Path
 
 import pytest
 
@@ -7,8 +8,11 @@ from vermyth.engine.composition import CompositionEngine
 from vermyth.engine.resonance import ResonanceEngine
 from vermyth.grimoire.store import Grimoire
 from vermyth.mcp.protocol import ERROR_INVALID_PARAMS, ERROR_METHOD_NOT_FOUND
+from vermyth.arcane.bundles import load_bundle
 from vermyth.mcp.server import VermythMCPServer
 from vermyth.mcp.tools import VermythTools
+
+_FIXTURE_BUNDLE_DIR = Path(__file__).resolve().parent / "fixtures" / "arcane_bundles"
 
 
 def test_vermyth_tools_importable():
@@ -260,3 +264,160 @@ def test_mcp_integration_invalid_aspects(tmp_path, valid_intent):
     resp = json.loads(out.read())
     assert resp["error"]["code"] == ERROR_INVALID_PARAMS
     assert resp["error"]["code"] == -32602
+
+
+def test_mcp_tools_call_decide_semantic_bundle_one_shot(tmp_path):
+    """MCP tools/call expands semantic_bundle before dispatch (parity with /a2a/tasks)."""
+    db = tmp_path / "bundle_mcp.db"
+    eng = ResonanceEngine(CompositionEngine(), None)
+    g = Grimoire(db_path=db)
+    out = io.StringIO()
+    s = VermythMCPServer(
+        stdin=io.StringIO(),
+        stdout=out,
+        stderr=io.StringIO(),
+        engine=eng,
+        grimoire=g,
+    )
+    s._handle_tools_call(
+        {
+            "jsonrpc": "2.0",
+            "id": 42,
+            "method": "tools/call",
+            "params": {
+                "name": "decide",
+                "arguments": {
+                    "semantic_bundle": {
+                        "bundle_id": "coherent_probe",
+                        "version": 1,
+                        "params": {"topic": "mcp_bundle"},
+                    }
+                },
+            },
+        }
+    )
+    out.seek(0)
+    resp = json.loads(out.read())
+    assert "result" in resp
+    body = resp["result"]
+    assert "arcane_provenance" in body
+    assert body["arcane_provenance"]["bundle_id"] == "coherent_probe"
+    assert "decision" in body and "cast" in body
+
+
+def test_mcp_tools_call_decide_plain_json_unchanged(tmp_path):
+    db = tmp_path / "plain_mcp.db"
+    eng = ResonanceEngine(CompositionEngine(), None)
+    g = Grimoire(db_path=db)
+    out = io.StringIO()
+    s = VermythMCPServer(
+        stdin=io.StringIO(),
+        stdout=out,
+        stderr=io.StringIO(),
+        engine=eng,
+        grimoire=g,
+    )
+    s._handle_tools_call(
+        {
+            "jsonrpc": "2.0",
+            "id": 43,
+            "method": "tools/call",
+            "params": {
+                "name": "decide",
+                "arguments": {
+                    "intent": {
+                        "objective": "Probe coherence on plain",
+                        "scope": "semantic_bundle",
+                        "reversibility": "REVERSIBLE",
+                        "side_effect_tolerance": "LOW",
+                    },
+                    "aspects": ["MIND", "LIGHT"],
+                },
+            },
+        }
+    )
+    out.seek(0)
+    resp = json.loads(out.read())
+    body = resp["result"]
+    assert "arcane_provenance" not in body
+    assert "decision" in body
+
+
+def test_mcp_tools_call_expand_semantic_bundle_not_double_expanded(tmp_path):
+    db = tmp_path / "meta_mcp.db"
+    eng = ResonanceEngine(CompositionEngine(), None)
+    g = Grimoire(db_path=db)
+    out = io.StringIO()
+    s = VermythMCPServer(
+        stdin=io.StringIO(),
+        stdout=out,
+        stderr=io.StringIO(),
+        engine=eng,
+        grimoire=g,
+    )
+    s._handle_tools_call(
+        {
+            "jsonrpc": "2.0",
+            "id": 44,
+            "method": "tools/call",
+            "params": {
+                "name": "expand_semantic_bundle",
+                "arguments": {
+                    "skill_id": "decide",
+                    "input": {
+                        "semantic_bundle": {
+                            "bundle_id": "strict_ward_probe",
+                            "version": 1,
+                            "params": {"topic": "meta"},
+                        }
+                    },
+                },
+            },
+        }
+    )
+    out.seek(0)
+    resp = json.loads(out.read())
+    assert "result" in resp
+    r = resp["result"]
+    assert r["skill_id"] == "decide"
+    assert r["input"]["thresholds"]["allow_min_resonance"] == 0.92
+    assert r["arcane_provenance"]["bundle_id"] == "strict_ward_probe"
+
+
+def test_mcp_tools_bundle_surface_decide_resolves_to_cast(tmp_path, monkeypatch):
+    monkeypatch.setenv("VERMYTH_ARCANE_BUNDLE_DIR", str(_FIXTURE_BUNDLE_DIR))
+    load_bundle.cache_clear()
+    db = tmp_path / "cast_route.db"
+    eng = ResonanceEngine(CompositionEngine(), None)
+    g = Grimoire(db_path=db)
+    out = io.StringIO()
+    s = VermythMCPServer(
+        stdin=io.StringIO(),
+        stdout=out,
+        stderr=io.StringIO(),
+        engine=eng,
+        grimoire=g,
+    )
+    s._handle_tools_call(
+        {
+            "jsonrpc": "2.0",
+            "id": 45,
+            "method": "tools/call",
+            "params": {
+                "name": "decide",
+                "arguments": {
+                    "semantic_bundle": {
+                        "bundle_id": "cast_smoke",
+                        "version": 1,
+                        "params": {"topic": "route"},
+                    }
+                },
+            },
+        }
+    )
+    out.seek(0)
+    resp = json.loads(out.read())
+    assert "result" in resp
+    body = resp["result"]
+    assert "cast_id" in body
+    assert body["arcane_provenance"]["bundle_id"] == "cast_smoke"

@@ -136,6 +136,8 @@ class Grimoire(GrimoireContract):
             ("v017", "v017_program_effects.sql"),
             ("v018", "v018_execution_receipts.sql"),
             ("v019", "v019_genesis_review.sql"),
+            ("v020", "v020_execution_receipt_audit.sql"),
+            ("v021", "v021_execution_receipt_arcane.sql"),
         ]
         for version, filename in migrations:
             if version in applied:

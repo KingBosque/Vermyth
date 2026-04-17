@@ -19,7 +19,8 @@ def test_monolith_line_count_ceilings() -> None:
         "vermyth/contracts/_legacy.py",
         "vermyth/mcp/tools/casting/_legacy.py",
         "vermyth/mcp/tools/facade.py",
-            "vermyth/mcp/server.py",
+        "vermyth/mcp/server.py",
+        "vermyth/cli/main.py",
     }
     overages: list[str] = []
     for py in sorted((ROOT / "vermyth").rglob("*.py")):

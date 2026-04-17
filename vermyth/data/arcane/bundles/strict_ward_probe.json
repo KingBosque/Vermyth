@@ -1,0 +1,19 @@
+{
+  "id": "strict_ward_probe",
+  "version": 1,
+  "kind": "decide",
+  "param_keys": ["topic"],
+  "template": {
+    "intent": {
+      "objective": "Warded coherence probe on {topic}",
+      "scope": "semantic_bundle",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "aspects": ["MIND"],
+    "thresholds": {
+      "allow_min_resonance": 0.92,
+      "effect_risk_min_score": 0.95
+    }
+  }
+}

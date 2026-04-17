@@ -1,0 +1,13 @@
+{
+  "id": "cast_smoke",
+  "version": 1,
+  "kind": "cast",
+  "param_keys": ["topic"],
+  "template": {
+    "aspects": ["MIND", "LIGHT"],
+    "objective": "Smoke {topic}",
+    "scope": "semantic_bundle",
+    "reversibility": "REVERSIBLE",
+    "side_effect_tolerance": "LOW"
+  }
+}

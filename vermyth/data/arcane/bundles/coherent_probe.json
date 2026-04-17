@@ -1,0 +1,15 @@
+{
+  "id": "coherent_probe",
+  "version": 1,
+  "kind": "decide",
+  "param_keys": ["topic"],
+  "template": {
+    "intent": {
+      "objective": "Probe coherence on {topic}",
+      "scope": "semantic_bundle",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "aspects": ["MIND", "LIGHT"]
+  }
+}

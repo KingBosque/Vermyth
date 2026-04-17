@@ -21,6 +21,8 @@ This document is the source of truth for Vermyth public-surface stability.
 - `vermyth.mcp.tools.drift`
 - `vermyth.mcp.tools.registry`
 - `vermyth.mcp.tools.observability`
+- `vermyth.arcane` (ontology types, bundle compiler, optional `semantic_bundle` expansion)
+- `vermyth.mcp.tools.arcane` (`expand_semantic_bundle`, `compile_ritual`)
 
 ## Experimental
 
@@ -31,6 +33,7 @@ This document is the source of truth for Vermyth public-surface stability.
 - `vermyth.mcp.binary_transport`
 - `vermyth.mcp.geometric`
 - `vermyth.mcp.tools.genesis` (experimental but reviewed)
+- `vermyth.adapters.a2a_server` and `vermyth.adapters.a2a.sdk_factory` (optional `[a2a]` JSON-RPC surface; legacy `vermyth.adapters.http` remains stable)
 
 ### Gated experimental tools
 
@@ -38,8 +41,7 @@ When **`VERMYTH_EXPERIMENTAL_TOOLS=1`**, MCP and HTTP also expose the swarm tool
 
 ## Deferred
 
-- Deeper A2A protocol parity beyond the current JSON task gateway (`POST /a2a/tasks`, `GET /.well-known/agent.json`).
-- Optional Ed25519 capability verification (`pip install -e .[a2a-crypto]`); HMAC remains the default dev path.
-- Real-environment benchmark adapters (OSWorld/WebArena integration mode; dry-run scaffolding exists under `benchmarks/adapters/`).
+- Full A2A spec coverage (SSE, gRPC, push) — see `docs/a2a-compatibility.md`.
+- Turnkey OSWorld/WebArena drivers in-repo (`bench-real` extra is a placeholder; `benchmarks/run_external.py` provides one real network path).
 
-See `docs/adr/0001-vermyth-as-semantic-ir.md` for rationale and boundary decisions. See `docs/http_adapter.md` and `docs/a2a.md` for the HTTP/A2A surface.
+See `docs/adr/0001-vermyth-as-semantic-ir.md` for rationale and boundary decisions. See `docs/http_adapter.md`, `docs/a2a.md`, and `docs/a2a-compatibility.md` for HTTP/A2A surfaces.

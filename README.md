@@ -46,12 +46,31 @@ Optional LLM projection backend:
 pip install -e .[llm]
 ```
 
+Optional A2A JSON-RPC server (see `docs/a2a-compatibility.md`):
+
+```bash
+pip install -e .[a2a]
+```
+
+Optional Ed25519 receipt signing / verification:
+
+```bash
+pip install -e .[a2a-crypto]
+```
+
+Optional JWT validation for Bearer (`VERMYTH_JWT_*`):
+
+```bash
+pip install -e .[auth-jwt]
+```
+
 Declared base dependencies (see `pyproject.toml`): **Pydantic v2**, **python-ulid**. The optional `llm` extra installs **anthropic** for `VERMYTH_BACKEND=llm|auto`.
 
 Console entry points after install:
 
 - **`vermyth`** — CLI (`vermyth.cli.main:main`)
 - **`vermyth-mcp`** — MCP stdio server (`vermyth.mcp.server:main`)
+- **`vermyth-a2a`** — optional A2A JSON-RPC edge (`vermyth.adapters.a2a_server:main`), requires `pip install -e .[a2a]`
 
 ## Consumers
 
@@ -59,6 +78,7 @@ Console entry points after install:
 - **MCP**: `vermyth-mcp` for JSON-RPC agent integrations.
 - **HTTP**: `python -m vermyth.adapters.http` for lightweight tool-style HTTP calls.
   See [`docs/http_adapter.md`](docs/http_adapter.md) for endpoint details.
+- **A2A (optional)**: standards-shaped JSON-RPC + agent card when using the `[a2a]` extra; compatibility notes in [`docs/a2a-compatibility.md`](docs/a2a-compatibility.md). The legacy `POST /a2a/tasks` shim remains the default HTTP path.
 
 ### V1 compatibility vs V2 sessions (experimental track)
 
@@ -79,9 +99,14 @@ Console entry points after install:
 ### Semantic programs
 
 - **`SemanticProgram`** defines a DAG of `CastNode`s (`CAST`, `FLUID_CAST`, `AUTO_CAST`, `GATE`, `MERGE`).
-- Compile with MCP/CLI (`compile_program`, `compile-program`) to validate graph integrity and mark `COMPILED`.
+- Compile with MCP/CLI (`compile_program`, `compile-program`) to validate graph integrity, run static validation (effects, retries, postconditions), and mark `COMPILED`. Responses include a `validation` object with warnings. Set `VERMYTH_DENY_PROGRAM_VALIDATION_WARNINGS=1` to refuse execution when warnings are present.
 - Execute with (`execute_program`, `execute-program`) to produce a `ProgramExecution` with node->cast mapping and branch lineage.
 - Persisted in grimoire migration **`v010_semantic_programs.sql`** (`programs`, `program_executions`).
+
+### Arcane semantic layer (optional)
+
+- **`vermyth.arcane`** maps ritual / ward / divination / banishment vocabulary to real behavior: bundle compilation, policy merges, program metadata, and provenance on receipts. Plain `skill_id` + `input` remains the baseline; **`semantic_bundle`** in task input (or the A2A extension URI) is optional and expands server-side.
+- MCP tools: **`expand_semantic_bundle`**, **`compile_ritual`**. Operational spec: [`docs/specs/ontology.md`](docs/specs/ontology.md); design digest: [`docs/specs/arcane-design-summary.md`](docs/specs/arcane-design-summary.md).
 
 ### Emergent aspect genesis
 
@@ -302,6 +327,7 @@ Tests cover schema validation, contracts, composition, resonance, grimoire, MCP 
 
 - `benchmarks/corpus_v0_synthetic.json` is a regression fixture, not a frontier performance claim.
 - External dry-run adapters live under `benchmarks/adapters/` (`osworld.py`, `webarena.py`) and are intended as a bridge toward realistic task evaluation.
+- A **real** minimal harness (`benchmarks/run_external.py`) records outbound HTTP + policy decisions under `benchmarks/artifacts/`. See [`docs/benchmarks.md`](docs/benchmarks.md) and `benchmarks/report.md`.
 
 ---
 

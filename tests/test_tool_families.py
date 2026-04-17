@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from vermyth.mcp.tool_definitions import TOOL_DEFINITIONS
+from vermyth.mcp.tools import arcane
 from vermyth.mcp.tools import casting
 from vermyth.mcp.tools import causal
 from vermyth.mcp.tools import decisions
@@ -15,6 +16,7 @@ from vermyth.mcp.tools import seeds
 
 FAMILY_MODULES = [
     decisions,
+    arcane,
     observability,
     casting,
     query,

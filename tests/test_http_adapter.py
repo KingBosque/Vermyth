@@ -83,6 +83,21 @@ def test_http_adapter_endpoints(tmp_path: Path) -> None:
             },
         )["result"]
         assert "decision" in decide and "cast" in decide
+        assert "arcane_provenance" not in decide
+
+        bundle_decide = _request(
+            f"{base}/tools/decide",
+            method="POST",
+            body={
+                "semantic_bundle": {
+                    "bundle_id": "coherent_probe",
+                    "version": 1,
+                    "params": {"topic": "http_adapter"},
+                }
+            },
+        )["result"]
+        assert "decision" in bundle_decide and "cast" in bundle_decide
+        assert bundle_decide["arcane_provenance"]["bundle_id"] == "coherent_probe"
 
         events = _request(f"{base}/events?tail=20")
         assert "events" in events

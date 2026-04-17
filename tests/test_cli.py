@@ -258,6 +258,7 @@ def test_build_parser_subcommands(make_cli):
         "list-programs",
         "execution-status",
         "execution-receipt",
+        "receipt-verify",
         "propose-genesis",
         "genesis-proposals",
         "accept-genesis",

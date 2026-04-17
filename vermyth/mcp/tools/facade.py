@@ -59,6 +59,7 @@ from vermyth.schema import (
 )
 from vermyth.mcp.geometric import decode_packet, encode_response, validate_proof
 from vermyth.observability import EventBus
+from vermyth.mcp.tools import arcane as arcane_tools
 from vermyth.mcp.tools import casting as casting_tools
 from vermyth.mcp.tools import causal as causal_tools
 from vermyth.mcp.tools import decisions as decision_tools
@@ -204,6 +205,14 @@ class VermythTools:
         return program_tools.tool_execution_status(self, execution_id)
     def tool_execution_receipt(self, execution_id: str) -> dict[str, Any]:
         return program_tools.tool_execution_receipt(self, execution_id)
+    def tool_verify_execution_receipt(
+        self, receipt: dict[str, Any], *, public_pem: str | None = None
+    ) -> dict[str, Any]:
+        return program_tools.tool_verify_execution_receipt(self, receipt, public_pem=public_pem)
+    def tool_expand_semantic_bundle(self, skill_id: str, input: dict[str, Any]) -> dict[str, Any]:
+        return arcane_tools.tool_expand_semantic_bundle(self, skill_id=skill_id, input=input)
+    def tool_compile_ritual(self, ritual: dict[str, Any]) -> dict[str, Any]:
+        return arcane_tools.tool_compile_ritual(self, ritual=ritual)
     def tool_propose_genesis(
         self,
         *,

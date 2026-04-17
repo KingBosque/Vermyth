@@ -530,6 +530,16 @@ class ExecutionReceipt(BaseModel):
     nodes: list[NodeExecutionReceipt] = Field(default_factory=list)
     started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: datetime | None = None
+    #: Optional Ed25519 signature (hex or base64) over canonical receipt bytes.
+    signature: str | None = None
+    #: Identifier for the key used to sign (e.g. env key id).
+    signing_key_id: str | None = None
+    #: Cross-hop correlation (HTTP X-Request-ID / A2A task id).
+    correlation_id: str | None = None
+    #: Authenticated principal subject when receipt is bound to auth.
+    principal_id: str | None = None
+    #: Arcane compilation provenance (ritual id, bundle id, etc.); included in canonical signing.
+    arcane_provenance: dict[str, Any] | None = None
 
 
 class Sigil(BaseModel):

@@ -27,3 +27,10 @@ This report has two tiers:
 - **webarena**: success_rate=0.5000; reshape_rate=0.5000; samples=2 (updated 2026-04-16T21:50Z)
 - note: adapter-level checks only; not equivalent to full live-environment benchmark runs.
 
+## External benchmark (real execution)
+
+- **Harness:** `benchmarks/run_external.py` (urllib fetch + in-process `tool_decide`).
+- **Artifacts:** JSON files under `benchmarks/artifacts/` (filename includes UTC run timestamp).
+- **Config:** `VERMYTH_BENCHMARK_EXTERNAL_URL` (optional); each artifact records `git_sha`, `fetch_url`, `http_status`, and decision summary.
+- **Distinction:** this tier performs real network I/O and is separate from dry-run adapters above.
+
