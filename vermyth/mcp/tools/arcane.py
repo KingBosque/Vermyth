@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from vermyth.arcane.compiler import compile_ritual_spec
+from vermyth.arcane.bundle_adoption_report import build_bundle_adoption_report
 from vermyth.arcane.bundle_telemetry import (
     get_bundle_adoption_summary,
     record_bundle_catalog_listed,
@@ -86,6 +87,11 @@ TOOLS = [
     {
         "name": "get_bundle_adoption_telemetry",
         "description": "Read-only local summary of bundle adoption events (recommend / catalog / inspect / invoke / missed). Requires VERMYTH_BUNDLE_TELEMETRY=1; no network export.",
+        "inputSchema": {"type": "object", "properties": {}},
+    },
+    {
+        "name": "get_bundle_adoption_report",
+        "description": "Derived bundle adoption report (funnels, tops, heuristic findings) from local telemetry; same data source as GET /arcane/telemetry/report.",
         "inputSchema": {"type": "object", "properties": {}},
     },
 ]
@@ -193,6 +199,11 @@ def tool_get_bundle_adoption_telemetry(tools: "VermythTools") -> dict[str, Any]:
     return get_bundle_adoption_summary()
 
 
+def tool_get_bundle_adoption_report(tools: "VermythTools") -> dict[str, Any]:
+    _ = tools
+    return build_bundle_adoption_report()
+
+
 def dispatch_recommend_semantic_bundles(
     tools: "VermythTools", arguments: dict[str, Any]
 ) -> dict[str, Any]:
@@ -212,6 +223,13 @@ def dispatch_get_bundle_adoption_telemetry(
     return tool_get_bundle_adoption_telemetry(tools)
 
 
+def dispatch_get_bundle_adoption_report(
+    tools: "VermythTools", arguments: dict[str, Any]
+) -> dict[str, Any]:
+    _ = arguments
+    return tool_get_bundle_adoption_report(tools)
+
+
 DISPATCH = {
     "expand_semantic_bundle": dispatch_expand_semantic_bundle,
     "compile_ritual": dispatch_compile_ritual,
@@ -219,4 +237,5 @@ DISPATCH = {
     "inspect_semantic_bundle": dispatch_inspect_semantic_bundle,
     "recommend_semantic_bundles": dispatch_recommend_semantic_bundles,
     "get_bundle_adoption_telemetry": dispatch_get_bundle_adoption_telemetry,
+    "get_bundle_adoption_report": dispatch_get_bundle_adoption_report,
 }

@@ -8,6 +8,7 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from vermyth.adapters.a2a import TaskGateway, build_agent_card
+from vermyth.arcane.bundle_adoption_report import build_bundle_adoption_report
 from vermyth.arcane.bundle_telemetry import (
     get_bundle_adoption_summary,
     record_bundle_catalog_listed,
@@ -107,6 +108,9 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/arcane/telemetry":
             _json_response(self, 200, get_bundle_adoption_summary())
+            return
+        if parsed.path == "/arcane/telemetry/report":
+            _json_response(self, 200, build_bundle_adoption_report())
             return
         if parsed.path == "/arcane/bundles":
             qs = parse_qs(parsed.query)

@@ -22,7 +22,7 @@ This document is the source of truth for Vermyth public-surface stability.
 - `vermyth.mcp.tools.registry`
 - `vermyth.mcp.tools.observability`
 - `vermyth.arcane` (ontology types, bundle compiler, optional `semantic_bundle` expansion)
-- `vermyth.mcp.tools.arcane` (`expand_semantic_bundle`, `compile_ritual`, `list_semantic_bundles`, `inspect_semantic_bundle`, `recommend_semantic_bundles`, `get_bundle_adoption_telemetry`)
+- `vermyth.mcp.tools.arcane` (`expand_semantic_bundle`, `compile_ritual`, `list_semantic_bundles`, `inspect_semantic_bundle`, `recommend_semantic_bundles`, `get_bundle_adoption_telemetry`, `get_bundle_adoption_report`)
 
 ## Experimental
 

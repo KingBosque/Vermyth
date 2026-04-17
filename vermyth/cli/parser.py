@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from typing import TYPE_CHECKING, Callable
 
+from vermyth.cli.commands import bundle_report as bundle_report_commands
 from vermyth.cli.commands import auto_cast as auto_cast_commands
 from vermyth.cli.commands import cast as cast_commands
 from vermyth.cli.commands import causal as causal_commands
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
 
 
 COMMAND_FAMILIES = [
+    bundle_report_commands,
     cast_commands,
     decide_commands,
     query_commands,

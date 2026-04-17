@@ -55,6 +55,7 @@ def test_cli_families_register_all_commands() -> None:
         "reject-genesis",
         "infer-cause",
         "add-cause",
+        "arcane-bundle-report",
         "causal-graph",
         "evaluate-narrative",
         "predictive-cast",

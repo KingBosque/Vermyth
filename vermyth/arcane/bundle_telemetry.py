@@ -20,7 +20,9 @@ _MAX_RECENT = 200
 _lock = threading.Lock()
 _counts_by_event: Counter[str] = Counter()
 _counts_by_bundle: Counter[str] = Counter()
+_bundle_event_matrix: Counter[tuple[str, str]] = Counter()
 _bytes_saved_total = 0
+_bytes_saved_by_bundle: Counter[str] = Counter()
 _recent: list[dict[str, Any]] = []
 
 
@@ -40,7 +42,9 @@ def reset_for_tests() -> None:
     with _lock:
         _counts_by_event.clear()
         _counts_by_bundle.clear()
+        _bundle_event_matrix.clear()
         _bytes_saved_total = 0
+        _bytes_saved_by_bundle.clear()
         _recent.clear()
 
 
@@ -56,6 +60,7 @@ def _bump(event_type: str, bundle_id: str | None) -> None:
         _counts_by_event[event_type] += 1
         if bundle_id:
             _counts_by_bundle[bundle_id] += 1
+            _bundle_event_matrix[(bundle_id, event_type)] += 1
 
 
 def record_bundle_recommended(
@@ -150,7 +155,9 @@ def record_bundle_invoked(
     with _lock:
         _counts_by_event["bundle_invoked"] += 1
         _counts_by_bundle[bundle_id] += 1
+        _bundle_event_matrix[(bundle_id, "bundle_invoked")] += 1
         _bytes_saved_total += saved
+        _bytes_saved_by_bundle[bundle_id] += saved
     _append_recent(ev)
 
 
@@ -204,6 +211,11 @@ def get_bundle_adoption_summary() -> dict[str, Any]:
         by_bundle = dict(_counts_by_bundle)
         recent = list(_recent[-50:])
         btot = _bytes_saved_total
+        mat_items = list(_bundle_event_matrix.items())
+        bsb = dict(_bytes_saved_by_bundle)
+    per_bundle: dict[str, dict[str, int]] = {}
+    for (bid, et), c in mat_items:
+        per_bundle.setdefault(bid, {})[et] = c
     funnel = {
         "bundle_recommended": by_event.get("bundle_recommended", 0),
         "bundle_catalog_listed": by_event.get("bundle_catalog_listed", 0),
@@ -216,6 +228,8 @@ def get_bundle_adoption_summary() -> dict[str, Any]:
         "missed_detection_enabled": missed_detection_enabled(),
         "counts_by_event_type": by_event,
         "counts_by_bundle_id": by_bundle,
+        "per_bundle_event_counts": per_bundle,
+        "bytes_saved_estimate_by_bundle": bsb,
         "funnel": funnel,
         "bytes_saved_estimate_total": btot,
         "note": (

@@ -266,6 +266,7 @@ def test_build_parser_subcommands(make_cli):
         "reject-genesis",
         "infer-cause",
         "add-cause",
+        "arcane-bundle-report",
         "causal-graph",
         "evaluate-narrative",
         "predictive-cast",

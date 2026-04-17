@@ -78,6 +78,12 @@ flowchart LR
 - **Read API:** MCP tool [`get_bundle_adoption_telemetry`](../../vermyth/mcp/tools/arcane.py), HTTP [`GET /arcane/telemetry`](../http_adapter.md), module [`vermyth/arcane/bundle_telemetry.py`](../../vermyth/arcane/bundle_telemetry.py) `get_bundle_adoption_summary()`.
 - **Funnel:** Aggregates include counts by `event_type` and `bundle_id`, plus **`bytes_saved_estimate_total`** from comparing JSON byte length of a compact `semantic_bundle` ref vs merged expanded input (transparent, approximate).
 
+### Bundle adoption report (derived)
+
+- **Purpose:** Turn raw counters into **decision-oriented** views: per-bundle event counts, **inspect/recommend/invoke** ratios (approximate), **missed-upgrade** emphasis, **bytes_saved_estimate_by_bundle**, **top** lists, and **findings** (rule-based hints, not scores).
+- **Surfaces:** Python [`build_bundle_adoption_report()`](../../vermyth/arcane/bundle_adoption_report.py), MCP `get_bundle_adoption_report`, HTTP `GET /arcane/telemetry/report`, CLI `vermyth arcane-bundle-report` (use `--json` for full JSON).
+- **Honesty:** Ratios divide **event totals**; they do not measure unique sessions. Findings are **heuristic** (e.g. high missed vs low invoke). Use them to decide where to improve docs, bundles, or UX—not as ground truth.
+
 ## Discovery (list, inspect, preview)
 
 - **MCP tools:** [`list_semantic_bundles`](../../vermyth/mcp/tools/arcane.py) (optional `kind` filter), [`inspect_semantic_bundle`](../../vermyth/mcp/tools/arcane.py) (`bundle_id`, `version`, optional `params` for an exact compiled preview).

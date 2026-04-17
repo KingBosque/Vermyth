@@ -235,6 +235,8 @@ class VermythTools:
         )
     def tool_get_bundle_adoption_telemetry(self) -> dict[str, Any]:
         return arcane_tools.tool_get_bundle_adoption_telemetry(self)
+    def tool_get_bundle_adoption_report(self) -> dict[str, Any]:
+        return arcane_tools.tool_get_bundle_adoption_report(self)
     def tool_propose_genesis(
         self,
         *,

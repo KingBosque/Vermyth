@@ -129,6 +129,9 @@ def test_http_adapter_endpoints(tmp_path: Path) -> None:
         probe = next(r for r in rec["recommendations"] if r["bundle_id"] == "coherent_probe")
         assert probe["guided_upgrade"]["semantic_bundle"]["bundle_id"] == "coherent_probe"
 
+        report = _request(f"{base}/arcane/telemetry/report")
+        assert report.get("schema_version") == 1
+
         events = _request(f"{base}/events?tail=20")
         assert "events" in events
 
