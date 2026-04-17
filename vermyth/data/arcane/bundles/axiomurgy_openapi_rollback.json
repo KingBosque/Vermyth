@@ -1,0 +1,57 @@
+{
+  "id": "axiomurgy_openapi_rollback",
+  "version": 1,
+  "kind": "decide",
+  "library": "canonical",
+  "summary": "Axiomurgy example: OpenAPI write + rollback (openapi_ticket_then_fail.spell.json)",
+  "description": "Matches Axiomurgy recommendation intent for the packaged OpenAPI ticket + intentional failure example: external boundary writes and compensation semantics.",
+  "recommended_for": [
+    "examples/openapi_ticket_then_fail.spell.json and similar API + rollback spells",
+    "High-risk external writes where Axiomurgy reports IRREVERSIBLE + HIGH tolerance"
+  ],
+  "stability": "stable",
+  "param_keys": [],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "Captures the fixed spell id scope for the OpenAPI rollback exercise so advisory recommendations surface the bundled semantic template without hand-authored decide JSON.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.93,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:openapi_ticket_then_fail_v0_6",
+              "reversibility": "IRREVERSIBLE",
+              "side_effect_tolerance": "HIGH"
+            },
+            "rule_id": "openapi_intent"
+          }
+        ]
+      },
+      {
+        "match_kind": "advisory",
+        "strength": 0.56,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:openapi_ticket_then_fail_v0_6"
+            },
+            "rule_id": "scope_only"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "intent": {
+      "objective": "OpenAPI ticket with scripted post-write failure for rollback witness",
+      "scope": "axiomurgy:openapi_ticket_then_fail_v0_6",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "HIGH"
+    },
+    "aspects": ["VOID", "MIND", "FORM"]
+  }
+}

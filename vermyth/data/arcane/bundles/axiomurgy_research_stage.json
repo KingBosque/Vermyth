@@ -1,0 +1,63 @@
+{
+  "id": "axiomurgy_research_stage",
+  "version": 1,
+  "kind": "decide",
+  "library": "canonical",
+  "summary": "Axiomurgy example: read → brief → verify → stage (research_brief.spell.json)",
+  "description": "Matches Axiomurgy spell_level intent for medium-risk research brief: write step yields PARTIAL reversibility and MEDIUM tolerance when risk is medium.",
+  "recommended_for": [
+    "examples/research_brief.spell.json",
+    "Read/synthesize/verify/stage pipelines before publication"
+  ],
+  "stability": "stable",
+  "param_keys": [],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "Distinguishes medium-risk staged publication spells from high-risk inbox or OpenAPI examples using the same honest Axiomurgy mapping rules.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.92,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:research_brief",
+              "reversibility": "PARTIAL",
+              "side_effect_tolerance": "MEDIUM"
+            },
+            "rule_id": "research_intent"
+          }
+        ]
+      },
+      {
+        "match_kind": "advisory",
+        "strength": 0.56,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:research_brief"
+            },
+            "rule_id": "scope_only"
+          },
+          {
+            "op": "objective_length_between",
+            "min_len": 20,
+            "max_len": 4000,
+            "rule_id": "bounded_objective"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "intent": {
+      "objective": "Research brief: gather sources, summarize, verify, stage",
+      "scope": "axiomurgy:research_brief",
+      "reversibility": "PARTIAL",
+      "side_effect_tolerance": "MEDIUM"
+    },
+    "aspects": ["MIND", "LIGHT", "FORM"]
+  }
+}

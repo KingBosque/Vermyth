@@ -1,0 +1,63 @@
+{
+  "id": "axiomurgy_inbox_triage",
+  "version": 1,
+  "kind": "decide",
+  "library": "canonical",
+  "summary": "Axiomurgy example: approval-gated read/transform/write (inbox_triage.spell.json)",
+  "description": "Matches spell-level Vermyth intent from Axiomurgy /arcane/recommend for the inbox triage example: scope axiomurgy:inbox_triage, high side-effect tolerance, irreversible writes under high/critical risk.",
+  "recommended_for": [
+    "Spells whose recommendation probe uses the default Axiomurgy spell_level_vermyth_intent mapping",
+    "Human-in-the-loop outbound flows modeled in examples/inbox_triage.spell.json"
+  ],
+  "stability": "stable",
+  "param_keys": [],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "Bundled decide template aligns with Axiomurgy-derived intent for the packaged inbox triage spell (scope + tolerance + reversibility from spell graph and risk).",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.94,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:inbox_triage",
+              "reversibility": "IRREVERSIBLE",
+              "side_effect_tolerance": "HIGH"
+            },
+            "rule_id": "axiomurgy_inbox_intent"
+          }
+        ]
+      },
+      {
+        "match_kind": "advisory",
+        "strength": 0.55,
+        "require_all": [
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "axiomurgy:inbox_triage"
+            },
+            "rule_id": "scope_only"
+          },
+          {
+            "op": "objective_length_between",
+            "min_len": 10,
+            "max_len": 2000,
+            "rule_id": "non_trivial_objective"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "intent": {
+      "objective": "Axiomurgy inbox triage (read, classify, approve, archive)",
+      "scope": "axiomurgy:inbox_triage",
+      "reversibility": "IRREVERSIBLE",
+      "side_effect_tolerance": "HIGH"
+    },
+    "aspects": ["MIND", "FORM", "LIGHT"]
+  }
+}
