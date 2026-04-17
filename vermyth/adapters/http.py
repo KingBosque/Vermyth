@@ -8,6 +8,11 @@ from typing import Any
 from urllib.parse import parse_qs, urlparse
 
 from vermyth.adapters.a2a import TaskGateway, build_agent_card
+from vermyth.arcane.bundle_telemetry import (
+    get_bundle_adoption_summary,
+    record_bundle_catalog_listed,
+    record_bundle_inspected,
+)
 from vermyth.arcane.discovery import inspect_semantic_bundle_detail, list_bundle_catalog
 from vermyth.arcane.recommend import recommend_for_plain_invocation
 from vermyth.arcane.invoke import attach_arcane_provenance, resolve_tool_invocation
@@ -100,6 +105,9 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
             )
             return
         parsed = urlparse(self.path)
+        if parsed.path == "/arcane/telemetry":
+            _json_response(self, 200, get_bundle_adoption_summary())
+            return
         if parsed.path == "/arcane/bundles":
             qs = parse_qs(parsed.query)
             raw_k = (qs.get("kind") or [None])[0]
@@ -109,6 +117,7 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
                 else None
             )
             rows = list_bundle_catalog(kind=k)
+            record_bundle_catalog_listed(surface="http", kind=k)
             _json_response(self, 200, {"bundles": rows})
             return
         if parsed.path.startswith("/arcane/bundles/"):
@@ -127,6 +136,12 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
             except (FileNotFoundError, ValueError) as exc:
                 _json_response(self, 404, {"error": str(exc)})
                 return
+            record_bundle_inspected(
+                surface="http",
+                bundle_id=bid,
+                version=ver,
+                guided_upgrade_shown=bool(detail.get("guided_upgrade")),
+            )
             _json_response(self, 200, detail)
             return
         _json_response(self, 404, {"error": "not_found"})
@@ -162,10 +177,13 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
                 ms = payload.get("min_strength")
                 if ms is not None:
                     result = recommend_for_plain_invocation(
-                        skill_id, inp, min_strength=float(ms)
+                        skill_id,
+                        inp,
+                        min_strength=float(ms),
+                        surface="http",
                     )
                 else:
-                    result = recommend_for_plain_invocation(skill_id, inp)
+                    result = recommend_for_plain_invocation(skill_id, inp, surface="http")
             except Exception as exc:
                 _json_response(self, 400, {"error": str(exc)})
                 return
@@ -201,7 +219,7 @@ class VermythHTTPHandler(BaseHTTPRequestHandler):
             if not isinstance(payload, dict):
                 raise ValueError("JSON body must be an object")
             resolved_name, merged_args, arc_prov = resolve_tool_invocation(
-                tool_name, payload
+                tool_name, payload, telemetry_surface="http"
             )
             handler = TOOL_DISPATCH.get(resolved_name)
             if handler is None:

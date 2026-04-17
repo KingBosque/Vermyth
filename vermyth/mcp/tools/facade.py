@@ -233,6 +233,8 @@ class VermythTools:
         return arcane_tools.tool_recommend_semantic_bundles(
             self, skill_id=skill_id, input=input, min_strength=min_strength
         )
+    def tool_get_bundle_adoption_telemetry(self) -> dict[str, Any]:
+        return arcane_tools.tool_get_bundle_adoption_telemetry(self)
     def tool_propose_genesis(
         self,
         *,

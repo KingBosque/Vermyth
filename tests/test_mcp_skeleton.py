@@ -124,6 +124,7 @@ def test_handle_tools_list_tools():
         "list_semantic_bundles",
         "inspect_semantic_bundle",
         "recommend_semantic_bundles",
+        "get_bundle_adoption_telemetry",
         "events_tail",
         "cast",
         "fluid_cast",

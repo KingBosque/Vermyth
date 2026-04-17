@@ -64,7 +64,9 @@ class TaskGateway:
                     error="capability_scope_denied",
                 )
                 return result.model_dump(mode="json")
-        skill_id, inp, arc_prov = expand_task_input(task.skill_id, dict(task.input))
+        skill_id, inp, arc_prov = expand_task_input(
+            task.skill_id, dict(task.input), telemetry_surface="a2a"
+        )
         handler = self._tool_dispatch.get(skill_id)
         if handler is None:
             result = TaskResult(task_id=task.task_id, status="failed", error="unknown_skill")

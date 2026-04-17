@@ -5,6 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from vermyth.arcane.compiler import compile_ritual_spec
+from vermyth.arcane.bundle_telemetry import (
+    get_bundle_adoption_summary,
+    record_bundle_catalog_listed,
+    record_bundle_inspected,
+)
 from vermyth.arcane.discovery import inspect_semantic_bundle_detail, list_bundle_catalog
 from vermyth.arcane.invoke import expand_to_invocation
 from vermyth.arcane.recommend import recommend_for_plain_invocation
@@ -78,6 +83,11 @@ TOOLS = [
             "required": ["skill_id", "input"],
         },
     },
+    {
+        "name": "get_bundle_adoption_telemetry",
+        "description": "Read-only local summary of bundle adoption events (recommend / catalog / inspect / invoke / missed). Requires VERMYTH_BUNDLE_TELEMETRY=1; no network export.",
+        "inputSchema": {"type": "object", "properties": {}},
+    },
 ]
 
 
@@ -122,6 +132,7 @@ def tool_list_semantic_bundles(
     _ = tools
     k = kind if kind in ("decide", "cast", "compile_program") else None
     rows = list_bundle_catalog(kind=k)
+    record_bundle_catalog_listed(surface="mcp", kind=k)
     return {"bundles": rows}
 
 
@@ -133,7 +144,14 @@ def tool_inspect_semantic_bundle(
     params: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     _ = tools
-    return inspect_semantic_bundle_detail(bundle_id, int(version), params=params)
+    out = inspect_semantic_bundle_detail(bundle_id, int(version), params=params)
+    record_bundle_inspected(
+        surface="mcp",
+        bundle_id=bundle_id,
+        version=int(version),
+        guided_upgrade_shown=bool(out.get("guided_upgrade")),
+    )
+    return out
 
 
 def dispatch_list_semantic_bundles(
@@ -165,9 +183,14 @@ def tool_recommend_semantic_bundles(
     _ = tools
     if min_strength is not None:
         return recommend_for_plain_invocation(
-            skill_id, input, min_strength=float(min_strength)
+            skill_id, input, min_strength=float(min_strength), surface="mcp"
         )
-    return recommend_for_plain_invocation(skill_id, input)
+    return recommend_for_plain_invocation(skill_id, input, surface="mcp")
+
+
+def tool_get_bundle_adoption_telemetry(tools: "VermythTools") -> dict[str, Any]:
+    _ = tools
+    return get_bundle_adoption_summary()
 
 
 def dispatch_recommend_semantic_bundles(
@@ -182,10 +205,18 @@ def dispatch_recommend_semantic_bundles(
     )
 
 
+def dispatch_get_bundle_adoption_telemetry(
+    tools: "VermythTools", arguments: dict[str, Any]
+) -> dict[str, Any]:
+    _ = arguments
+    return tool_get_bundle_adoption_telemetry(tools)
+
+
 DISPATCH = {
     "expand_semantic_bundle": dispatch_expand_semantic_bundle,
     "compile_ritual": dispatch_compile_ritual,
     "list_semantic_bundles": dispatch_list_semantic_bundles,
     "inspect_semantic_bundle": dispatch_inspect_semantic_bundle,
     "recommend_semantic_bundles": dispatch_recommend_semantic_bundles,
+    "get_bundle_adoption_telemetry": dispatch_get_bundle_adoption_telemetry,
 }

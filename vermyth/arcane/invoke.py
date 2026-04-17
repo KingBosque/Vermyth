@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from vermyth.arcane import bundle_telemetry
 from vermyth.arcane.constants import VERMYTH_EXT_SEMANTIC_BUNDLE
 from vermyth.arcane.compiler import compile_semantic_bundle_ref
 from vermyth.arcane.types import CompiledInvocation
@@ -44,17 +45,60 @@ def strip_bundle_keys(inp: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def expand_task_input(skill_id: str, inp: dict[str, Any]) -> tuple[str, dict[str, Any], dict[str, Any] | None]:
+def expand_task_input(
+    skill_id: str,
+    inp: dict[str, Any],
+    *,
+    telemetry_surface: str | None = None,
+) -> tuple[str, dict[str, Any], dict[str, Any] | None]:
     """
     If input contains a semantic bundle reference, compile it and return
     (skill_id, merged_input, provenance). Otherwise return (skill_id, inp, None).
+
+    ``telemetry_surface`` tags optional local bundle adoption telemetry (``VERMYTH_BUNDLE_TELEMETRY``).
     """
     ref = extract_semantic_bundle_ref(inp)
     if not ref:
+        if bundle_telemetry.missed_detection_enabled() and skill_id in (
+            "decide",
+            "cast",
+            "compile_program",
+        ):
+            from vermyth.arcane.recommend import recommend_for_plain_invocation
+
+            surf = telemetry_surface or "unknown"
+            rec = recommend_for_plain_invocation(
+                skill_id,
+                dict(inp),
+                surface=surf,
+                emit_recommendation_telemetry=False,
+            )
+            for r in rec.get("recommendations", []):
+                bundle_telemetry.record_bundle_recommendation_missed(
+                    surface=surf,
+                    skill_id=skill_id,
+                    bundle_id=str(r["bundle_id"]),
+                    version=int(r["version"]),
+                    strength=float(r["strength"]),
+                    match_kind=str(r["match_kind"]),
+                    target_skill=str(r["target_skill"]),
+                )
         return skill_id, inp, None
     inv = compile_semantic_bundle_ref(ref)
     base = strip_bundle_keys(inp)
     merged = {**base, **inv.input}
+    if bundle_telemetry.is_enabled():
+        bid = str(inv.arcane_provenance.get("bundle_id", ""))
+        ver = int(inv.arcane_provenance.get("bundle_version", 0))
+        rb, eb = bundle_telemetry.estimate_invocation_payload_metrics(ref, merged)
+        bundle_telemetry.record_bundle_invoked(
+            surface=telemetry_surface or "unknown",
+            bundle_id=bid,
+            version=ver,
+            target_skill=inv.skill_id,
+            ref_bytes=rb,
+            expanded_bytes=eb,
+        )
     return inv.skill_id, merged, inv.arcane_provenance
 
 
@@ -71,7 +115,10 @@ def expand_to_invocation(skill_id: str, inp: dict[str, Any]) -> CompiledInvocati
 
 
 def resolve_tool_invocation(
-    tool_name: str, arguments: dict[str, Any]
+    tool_name: str,
+    arguments: dict[str, Any],
+    *,
+    telemetry_surface: str | None = None,
 ) -> tuple[str, dict[str, Any], dict[str, Any] | None]:
     """
     Resolve MCP/HTTP tool name + arguments using the same expansion as TaskGateway.
@@ -84,7 +131,7 @@ def resolve_tool_invocation(
     """
     if tool_name in _TOOL_INVOCATION_SKIP_SEMANTIC_EXPANSION:
         return tool_name, arguments, None
-    return expand_task_input(tool_name, arguments)
+    return expand_task_input(tool_name, arguments, telemetry_surface=telemetry_surface)
 
 
 def attach_arcane_provenance(

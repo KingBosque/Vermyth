@@ -190,11 +190,18 @@ def recommend_for_plain_invocation(
     arguments: dict[str, Any],
     *,
     min_strength: float = 0.55,
+    surface: str | None = None,
+    emit_recommendation_telemetry: bool = True,
 ) -> dict[str, Any]:
     """
     Evaluate plain tool arguments (no semantic_bundle) using manifest ``recommendation`` tiers.
 
     Advisory only; does not execute tools or rewrite requests.
+
+    When local bundle telemetry is enabled (``VERMYTH_BUNDLE_TELEMETRY``), optional
+    ``surface`` (e.g. ``mcp``, ``http``) tags recommendation events. Set
+    ``emit_recommendation_telemetry=False`` when calling internally for missed-upgrade
+    detection to avoid double-counting recommendation events.
     """
     if extract_semantic_bundle_ref(arguments):
         return {
@@ -218,6 +225,22 @@ def recommend_for_plain_invocation(
             continue
         seen.add(bid)
         deduped.append(r)
+
+    if emit_recommendation_telemetry and surface and deduped:
+        from vermyth.arcane.bundle_telemetry import is_enabled, record_bundle_recommended
+
+        if is_enabled():
+            surf = surface
+            for r in deduped:
+                record_bundle_recommended(
+                    surface=surf,
+                    skill_id=skill_id,
+                    bundle_id=str(r["bundle_id"]),
+                    version=int(r["version"]),
+                    strength=float(r["strength"]),
+                    match_kind=str(r["match_kind"]),
+                    target_skill=str(r["target_skill"]),
+                )
 
     return {
         "skill_id": skill_id,

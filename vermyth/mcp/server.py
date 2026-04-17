@@ -14,6 +14,10 @@ from urllib.parse import parse_qs, urlparse
 
 from vermyth.mcp.binary_transport import FrameType, decode_frame_from_buffer, encode_frame
 
+from vermyth.arcane.bundle_telemetry import (
+    record_bundle_catalog_listed,
+    record_bundle_inspected,
+)
 from vermyth.arcane.discovery import inspect_semantic_bundle_detail, list_bundle_catalog
 from vermyth.arcane.invoke import attach_arcane_provenance, resolve_tool_invocation
 from vermyth.bootstrap import build_tools, build_tools_from_env
@@ -331,6 +335,7 @@ class VermythMCPServer:
                     else None
                 )
                 payload: Any = {"bundles": list_bundle_catalog(kind=k)}
+                record_bundle_catalog_listed(surface="mcp_resource", kind=k)
                 self._send(
                     make_success(
                         get_id(message),
@@ -358,6 +363,12 @@ class VermythMCPServer:
                     )
                     return
                 payload = inspect_semantic_bundle_detail(bid, ver)
+                record_bundle_inspected(
+                    surface="mcp_resource",
+                    bundle_id=bid,
+                    version=ver,
+                    guided_upgrade_shown=bool(payload.get("guided_upgrade")),
+                )
                 self._send(
                     make_success(
                         get_id(message),
@@ -453,7 +464,7 @@ class VermythMCPServer:
 
         try:
             resolved_name, merged_args, arc_prov = resolve_tool_invocation(
-                str(tool_name), arguments
+                str(tool_name), arguments, telemetry_surface="mcp"
             )
             handler = TOOL_DISPATCH.get(resolved_name)
             if handler is None:

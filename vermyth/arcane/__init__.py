@@ -6,6 +6,7 @@ from vermyth.arcane.compiler import (
     compile_semantic_bundle_ref,
     merge_ward_into_thresholds,
 )
+from vermyth.arcane.bundle_telemetry import get_bundle_adoption_summary
 from vermyth.arcane.discovery import (
     build_guided_upgrade,
     inspect_semantic_bundle_detail,
@@ -50,6 +51,7 @@ __all__ = [
     "merge_ward_into_thresholds",
     "attach_arcane_provenance",
     "build_guided_upgrade",
+    "get_bundle_adoption_summary",
     "expand_task_input",
     "expand_to_invocation",
     "extract_semantic_bundle_ref",

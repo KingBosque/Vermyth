@@ -130,7 +130,9 @@ class VermythAgentExecutor(AgentExecutor):
                     "semantic_bundle": context.metadata[VERMYTH_EXT_SEMANTIC_BUNDLE],
                 }
             skill_id, input_obj, arc_prov = await asyncio.to_thread(
-                expand_task_input, skill_id, input_obj
+                lambda: expand_task_input(
+                    skill_id, input_obj, telemetry_surface="a2a"
+                )
             )
 
             requires_capability = bool(

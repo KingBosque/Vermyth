@@ -69,6 +69,15 @@ flowchart LR
 - **Discovery:** Catalog/list responses may include **`library`** (`canonical` or `extended`) when set, plus a compact **`recommendation`** summary when the manifest declares tiers (`target_skills`, `tier_count`, `match_kinds`).
 - Recommendations are **advisory**; plain JSON execution is unchanged. There is **no** silent rewrite of requests on invoke paths in the default stack. Scope stays **decide**-centric unless a bundle opts in via `target_skills`; broader skills can be added later through manifests.
 
+## Bundle adoption telemetry (local)
+
+- **Purpose:** Answer locally whether bundles are **recommended**, **listed/inspected**, **invoked**, or **missed** (plain JSON matched a bundle pattern but no `semantic_bundle` was used)—without external analytics or off-box data.
+- **Enable:** Set **`VERMYTH_BUNDLE_TELEMETRY=1`**. Optional **`VERMYTH_BUNDLE_TELEMETRY_MISSED=1`** additionally runs manifest recommendation matching on plain `decide` / `cast` / `compile_program` invocations to emit **`bundle_recommendation_missed`** events (extra work per call; keep off unless evaluating adoption).
+- **Default:** Telemetry **off**; no behavior change for operators who do not set env vars.
+- **Privacy:** In-memory counters and a bounded recent-event sample (no full request bodies, no secrets, no network export). Surfaces tag **`surface`** (`http`, `mcp`, `mcp_resource`, `mcp_packet`, `a2a`, etc.) for debugging only.
+- **Read API:** MCP tool [`get_bundle_adoption_telemetry`](../../vermyth/mcp/tools/arcane.py), HTTP [`GET /arcane/telemetry`](../http_adapter.md), module [`vermyth/arcane/bundle_telemetry.py`](../../vermyth/arcane/bundle_telemetry.py) `get_bundle_adoption_summary()`.
+- **Funnel:** Aggregates include counts by `event_type` and `bundle_id`, plus **`bytes_saved_estimate_total`** from comparing JSON byte length of a compact `semantic_bundle` ref vs merged expanded input (transparent, approximate).
+
 ## Discovery (list, inspect, preview)
 
 - **MCP tools:** [`list_semantic_bundles`](../../vermyth/mcp/tools/arcane.py) (optional `kind` filter), [`inspect_semantic_bundle`](../../vermyth/mcp/tools/arcane.py) (`bundle_id`, `version`, optional `params` for an exact compiled preview).
