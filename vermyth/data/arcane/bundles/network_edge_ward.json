@@ -1,0 +1,66 @@
+{
+  "id": "network_edge_ward",
+  "version": 1,
+  "kind": "decide",
+  "library": "canonical",
+  "summary": "VOID+MIND decide with strict effect-risk gates for external / boundary work",
+  "description": "Encodes a ward tuned for network-adjacent or externally scoped decisions: VOID+MIND aspects and tight effect-risk / allow thresholds so ALLOW stays conservative without hand-merging PolicyThresholds each time.",
+  "recommended_for": [
+    "Decisions that touch external systems, APIs, or untrusted boundaries",
+    "When you want the same ward thresholds every time you phrase a boundary check"
+  ],
+  "stability": "stable",
+  "param_keys": ["topic"],
+  "recommendation": {
+    "target_skills": ["decide"],
+    "why_better": "Bundled aspects plus ward thresholds stay aligned; provenance shows which preset you used—less error than copying threshold numbers into ad hoc JSON.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.93,
+        "require_all": [
+          {
+            "op": "aspects_eq",
+            "value": ["VOID", "MIND"],
+            "rule_id": "aspects"
+          },
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "semantic_bundle",
+              "reversibility": "REVERSIBLE",
+              "side_effect_tolerance": "LOW"
+            },
+            "rule_id": "intent_shape"
+          },
+          {
+            "op": "thresholds_eq",
+            "value": {
+              "allow_min_resonance": 0.88,
+              "effect_risk_min_score": 0.97
+            },
+            "rule_id": "edge_thresholds"
+          },
+          {
+            "op": "objective_starts_with",
+            "value": "Network edge ward on ",
+            "rule_id": "objective_prefix"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "intent": {
+      "objective": "Network edge ward on {topic}",
+      "scope": "semantic_bundle",
+      "reversibility": "REVERSIBLE",
+      "side_effect_tolerance": "LOW"
+    },
+    "aspects": ["VOID", "MIND"],
+    "thresholds": {
+      "allow_min_resonance": 0.88,
+      "effect_risk_min_score": 0.97
+    }
+  }
+}

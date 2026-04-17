@@ -1,0 +1,52 @@
+{
+  "id": "resonance_ping_cast",
+  "version": 1,
+  "kind": "cast",
+  "library": "canonical",
+  "summary": "Repeatable MIND+LIGHT cast probe for health checks and lightweight resonance reads",
+  "description": "Expands to cast with a stable objective prefix and fixed aspects—useful when agents repeatedly sanity-check resonance without re-specifying intent fields.",
+  "recommended_for": [
+    "Smoke or liveness casts before heavier work",
+    "Agents that should send the same cast shape with only the subject line changing"
+  ],
+  "stability": "stable",
+  "param_keys": ["topic"],
+  "recommendation": {
+    "target_skills": ["cast"],
+    "why_better": "The bundle keeps cast arguments short and consistent and records arcane_provenance—fewer mistakes than free-form objectives on every call.",
+    "tiers": [
+      {
+        "match_kind": "exact",
+        "strength": 0.91,
+        "require_all": [
+          {
+            "op": "aspects_eq",
+            "value": ["MIND", "LIGHT"],
+            "rule_id": "aspects"
+          },
+          {
+            "op": "intent_subset_eq",
+            "value": {
+              "scope": "semantic_bundle",
+              "reversibility": "REVERSIBLE",
+              "side_effect_tolerance": "LOW"
+            },
+            "rule_id": "intent_shape"
+          },
+          {
+            "op": "objective_starts_with",
+            "value": "Resonance ping: ",
+            "rule_id": "objective_prefix"
+          }
+        ]
+      }
+    ]
+  },
+  "template": {
+    "aspects": ["MIND", "LIGHT"],
+    "objective": "Resonance ping: {topic}",
+    "scope": "semantic_bundle",
+    "reversibility": "REVERSIBLE",
+    "side_effect_tolerance": "LOW"
+  }
+}

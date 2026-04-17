@@ -63,9 +63,10 @@ flowchart LR
 ## Recommendation (advisory selection)
 
 - **Manifest-first:** Built-in bundles declare optional **`recommendation`** metadata in JSON (`BundleRecommendationSpec` in [`vermyth/arcane/types.py`](../../vermyth/arcane/types.py)): `target_skills`, `why_better`, and ordered **`tiers`** (each tier: `match_kind`, `strength`, `require_all` rules). The engine evaluates declarative ops listed in [`RULE_OPS`](../../vermyth/arcane/recommend.py); first matching tier wins per bundle. New bundles can opt in without adding Python branches.
+- **Guided upgrade:** Each recommendation row includes **`guided_upgrade`**: copy-paste **`semantic_bundle`** (placeholder params), **inspect** targets (MCP tool + args, HTTP GET path, MCP resource URI), and **invoke** target skill—additive only; no auto-execution. Inspect responses include the same object for consistency.
 - **MCP:** [`recommend_semantic_bundles`](../../vermyth/mcp/tools/arcane.py) — pass `skill_id` + `input` as for a plain tool call; returns ranked suggestions with **explicit `matched_features`** strings (rule ids / ops echoed for inspection).
 - **HTTP:** `POST /arcane/recommend` with the same JSON body.
-- **Discovery:** Catalog/list responses may include a compact **`recommendation`** summary when the manifest declares tiers (`target_skills`, `tier_count`, `match_kinds`).
+- **Discovery:** Catalog/list responses may include **`library`** (`canonical` or `extended`) when set, plus a compact **`recommendation`** summary when the manifest declares tiers (`target_skills`, `tier_count`, `match_kinds`).
 - Recommendations are **advisory**; plain JSON execution is unchanged. There is **no** silent rewrite of requests on invoke paths in the default stack. Scope stays **decide**-centric unless a bundle opts in via `target_skills`; broader skills can be added later through manifests.
 
 ## Discovery (list, inspect, preview)
@@ -82,8 +83,11 @@ flowchart LR
 | `coherent_probe` | `decide` | One `semantic_bundle` ref vs full `intent` + `aspects`; provenance on the result. |
 | `strict_ward_probe` | `decide` | Encodes ward thresholds (0.92 / effect-risk) without hand-writing `thresholds`. |
 | `divination_gate` | `decide` | Encodes causal/divination gate; fails without `causal_root_cast_id` when required. |
+| `network_edge_ward` | `decide` | VOID+MIND + boundary-oriented thresholds for external-facing decisions. |
+| `resonance_ping_cast` | `cast` | Repeatable MIND+LIGHT cast probe; stable objective prefix. |
+| `compile_single_cast_program` | `compile_program` | Minimal one-node `SemanticProgram` for `compile_program` without hand-building graph JSON. |
 
-Plain JSON equivalents are documented in [`docs/http_adapter.md`](../http_adapter.md); both remain supported.
+Manifests set `"library": "canonical"` for these built-ins. Plain JSON equivalents are documented in [`docs/http_adapter.md`](../http_adapter.md); both remain supported.
 
 ## Wire protocol
 

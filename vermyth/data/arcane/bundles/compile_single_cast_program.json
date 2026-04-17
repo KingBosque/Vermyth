@@ -1,0 +1,40 @@
+{
+  "id": "compile_single_cast_program",
+  "version": 1,
+  "kind": "compile_program",
+  "library": "canonical",
+  "summary": "Minimal one-node CAST program preset for compile_program",
+  "description": "Expands to compile_program with a single CAST node and semantic_bundle-scoped intent—handy when you want a valid SemanticProgram skeleton without hand-authoring graph JSON.",
+  "recommended_for": [
+    "Bootstrapping program storage with a known-good single-step graph",
+    "Teaching or tests that need a minimal compiled program"
+  ],
+  "stability": "stable",
+  "param_keys": ["topic"],
+  "template": {
+    "program": {
+      "name": "single-cast-{topic}",
+      "nodes": [
+        {
+          "node_id": "n1",
+          "node_type": "CAST",
+          "aspects": ["MIND", "LIGHT"],
+          "intent": {
+            "objective": "Pipeline entry: {topic}",
+            "scope": "semantic_bundle",
+            "reversibility": "REVERSIBLE",
+            "side_effect_tolerance": "LOW"
+          },
+          "successors": []
+        }
+      ],
+      "entry_node_ids": ["n1"],
+      "metadata": {
+        "arcane": {
+          "preset": "single_cast_entry",
+          "bundle": "compile_single_cast_program"
+        }
+      }
+    }
+  }
+}

@@ -115,6 +115,10 @@ class SemanticBundleManifest(BaseModel):
     description: str | None = None
     recommended_for: tuple[str, ...] = Field(default_factory=tuple)
     stability: Literal["stable", "experimental"] | None = None
+    library: Literal["canonical", "extended"] | None = Field(
+        default=None,
+        description="Curated library tier for discovery docs (canonical = highlighted defaults).",
+    )
     recommendation: BundleRecommendationSpec | None = None
 
 

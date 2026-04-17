@@ -105,6 +105,7 @@ def test_http_adapter_endpoints(tmp_path: Path) -> None:
         assert detail["manifest"]["id"] == "coherent_probe"
         assert detail["compiled_preview"]["skill_id"] == "decide"
         assert detail["semantic_bundle_ref_example"]["bundle_id"] == "coherent_probe"
+        assert detail["guided_upgrade"]["inspect"]["http_get_path"].startswith("/arcane/bundles/")
 
         rec = _request(
             f"{base}/arcane/recommend",
@@ -125,6 +126,8 @@ def test_http_adapter_endpoints(tmp_path: Path) -> None:
         assert any(
             r["bundle_id"] == "coherent_probe" for r in rec["recommendations"]
         )
+        probe = next(r for r in rec["recommendations"] if r["bundle_id"] == "coherent_probe")
+        assert probe["guided_upgrade"]["semantic_bundle"]["bundle_id"] == "coherent_probe"
 
         events = _request(f"{base}/events?tail=20")
         assert "events" in events

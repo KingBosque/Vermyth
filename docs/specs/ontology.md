@@ -130,6 +130,11 @@ This document defines **computational** semantics for arcane vocabulary. Names m
 - **Shape:** `target_skills` (e.g. `decide`), human-readable `why_better`, and ordered `tiers` (first match wins). Each tier lists `require_all` rules with explicit `op` names implemented in [`vermyth/arcane/recommend.py`](../../vermyth/arcane/recommend.py) (`RULE_OPS`).
 - **Fallback:** Bundles omit `recommendation`; they remain listable and usable without advisory matching.
 
+### Bundle manifest `library` (optional)
+
+- **Kind:** Optional string `canonical` or `extended` on `SemanticBundleManifest`.
+- **Purpose:** Discovery-only hint for curated documentation and catalog rows; does not change compilation or runtime behavior.
+
 ## Deprecations
 
 - None in this release; decorative items are **labeled**, not removed.

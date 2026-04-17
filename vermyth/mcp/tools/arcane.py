@@ -51,7 +51,7 @@ TOOLS = [
     },
     {
         "name": "inspect_semantic_bundle",
-        "description": "Return bundle manifest, compiled preview (skill_id + input), and a copy-paste semantic_bundle ref (no execution).",
+        "description": "Return bundle manifest, compiled preview (skill_id + input), copy-paste semantic_bundle ref, and guided_upgrade (inspect paths + next-step ref) (no execution).",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -64,7 +64,7 @@ TOOLS = [
     },
     {
         "name": "recommend_semantic_bundles",
-        "description": "Advisory: suggest semantic bundles for plain skill_id + input using manifest-declared recommendation tiers (inspectable matched_features; no execution).",
+        "description": "Advisory: suggest semantic bundles for plain skill_id + input using manifest-declared recommendation tiers (inspectable matched_features; each row includes guided_upgrade with semantic_bundle ref, inspect URI/path, and target skill; no execution).",
         "inputSchema": {
             "type": "object",
             "properties": {

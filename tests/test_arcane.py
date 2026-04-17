@@ -189,6 +189,10 @@ def test_catalog_includes_compact_recommendation_hints():
         assert hint["tier_count"] >= 1
         assert "decide" in hint["target_skills"]
         assert hint["match_kinds"]
+    assert rows["coherent_probe"].get("library") == "canonical"
+    assert "network_edge_ward" in rows
+    assert "resonance_ping_cast" in rows
+    assert "compile_single_cast_program" in rows
 
 
 def test_bundle_manifest_parses_recommendation_metadata():
@@ -221,6 +225,8 @@ def test_inspect_semantic_bundle_detail_has_compiled_preview():
     assert d["compiled_preview"]["skill_id"] == "decide"
     assert "intent" in d["compiled_preview"]["input"]
     assert d["semantic_bundle_ref_example"]["bundle_id"] == "coherent_probe"
+    assert d["guided_upgrade"]["semantic_bundle"]["bundle_id"] == "coherent_probe"
+    assert "/arcane/bundles/coherent_probe" in d["guided_upgrade"]["inspect"]["http_get_path"]
 
 
 def test_recommend_skips_when_semantic_bundle_present():
@@ -253,6 +259,7 @@ def test_recommend_coherent_probe_exact():
     top = [r for r in out["recommendations"] if r["bundle_id"] == "coherent_probe"]
     assert top and top[0]["match_kind"] == "exact"
     assert top[0]["strength"] >= 0.9
+    assert top[0]["guided_upgrade"]["semantic_bundle"]["bundle_id"] == "coherent_probe"
 
 
 def test_recommend_strict_ward_probe_exact():
@@ -328,6 +335,55 @@ def test_recommend_no_match_for_unrelated_decide():
 def test_recommend_non_decide_skill_empty():
     out = recommend_for_plain_invocation("cast", {"aspects": ["MIND"], "objective": "x", "scope": "s"})
     assert out["recommendations"] == []
+
+
+def test_recommend_resonance_ping_cast_exact():
+    out = recommend_for_plain_invocation(
+        "cast",
+        {
+            "aspects": ["MIND", "LIGHT"],
+            "objective": "Resonance ping: smoke",
+            "scope": "semantic_bundle",
+            "reversibility": "REVERSIBLE",
+            "side_effect_tolerance": "LOW",
+        },
+    )
+    rows = [r for r in out["recommendations"] if r["bundle_id"] == "resonance_ping_cast"]
+    assert rows and rows[0]["match_kind"] == "exact"
+    assert rows[0]["guided_upgrade"]["semantic_bundle"]["bundle_id"] == "resonance_ping_cast"
+
+
+def test_recommend_network_edge_ward_exact():
+    out = recommend_for_plain_invocation(
+        "decide",
+        {
+            "intent": {
+                "objective": "Network edge ward on outbound-api",
+                "scope": "semantic_bundle",
+                "reversibility": "REVERSIBLE",
+                "side_effect_tolerance": "LOW",
+            },
+            "aspects": ["VOID", "MIND"],
+            "thresholds": {
+                "allow_min_resonance": 0.88,
+                "effect_risk_min_score": 0.97,
+            },
+        },
+    )
+    rows = [r for r in out["recommendations"] if r["bundle_id"] == "network_edge_ward"]
+    assert rows and rows[0]["match_kind"] == "exact"
+
+
+def test_compile_single_cast_program_bundle_compiles():
+    ref = {
+        "bundle_id": "compile_single_cast_program",
+        "version": 1,
+        "params": {"topic": "unit-graph"},
+    }
+    inv = compile_semantic_bundle_ref(ref)
+    assert inv.skill_id == "compile_program"
+    assert inv.input["program"]["nodes"][0]["node_type"] == "CAST"
+    assert "Pipeline entry: unit-graph" in inv.input["program"]["nodes"][0]["intent"]["objective"]
 
 
 def test_resolve_tool_invocation_decide_to_cast(monkeypatch):

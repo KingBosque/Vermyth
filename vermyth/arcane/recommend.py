@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from typing import Any, Callable, Literal
 
-from vermyth.arcane.discovery import list_bundle_ids, load_primary_bundle_manifest
+from vermyth.arcane.discovery import (
+    build_guided_upgrade,
+    list_bundle_ids,
+    load_primary_bundle_manifest,
+)
 from vermyth.arcane.invoke import extract_semantic_bundle_ref
 from vermyth.arcane.types import (
     BundleRecommendationSpec,
@@ -23,7 +27,14 @@ def _norm_aspects(raw: Any) -> list[str]:
 
 def _intent_slice(arguments: dict[str, Any]) -> dict[str, Any]:
     intent = arguments.get("intent")
-    return dict(intent) if isinstance(intent, dict) else {}
+    if isinstance(intent, dict):
+        return dict(intent)
+    # Flat tool schema (e.g. cast): intent fields at top level
+    out: dict[str, Any] = {}
+    for k in ("objective", "scope", "reversibility", "side_effect_tolerance"):
+        if k in arguments:
+            out[k] = arguments[k]
+    return out
 
 
 def _intent_subset_eq(intent: dict[str, Any], required: dict[str, Any]) -> bool:
@@ -168,6 +179,7 @@ def _evaluate_bundle(
                 "matched_features": matched,
                 "target_skill": target_skill,
                 "why_better": spec.why_better,
+                "guided_upgrade": build_guided_upgrade(manifest),
             }
         ]
     return []

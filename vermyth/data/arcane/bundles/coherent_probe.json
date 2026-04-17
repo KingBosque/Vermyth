@@ -2,6 +2,7 @@
   "id": "coherent_probe",
   "version": 1,
   "kind": "decide",
+  "library": "canonical",
   "summary": "Default policy probe with MIND+LIGHT and low side-effect tolerance",
   "description": "Expands to decide with a formatted objective and fixed aspects. Prefer this over hand-writing full intent JSON when you want a repeatable coherence check and arcane_provenance on the result.",
   "recommended_for": [

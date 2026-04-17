@@ -244,10 +244,10 @@ def test_mcp_recommend_semantic_bundles_tool(tmp_path):
     )
     out.seek(0)
     resp = json.loads(out.read())
-    assert any(
-        r["bundle_id"] == "coherent_probe"
-        for r in resp["result"]["recommendations"]
-    )
+    recs = resp["result"]["recommendations"]
+    assert any(r["bundle_id"] == "coherent_probe" for r in recs)
+    probe = next(r for r in recs if r["bundle_id"] == "coherent_probe")
+    assert probe["guided_upgrade"]["semantic_bundle"]["bundle_id"] == "coherent_probe"
 
 
 def test_mcp_list_semantic_bundles_tool(tmp_path):
@@ -304,6 +304,7 @@ def test_mcp_inspect_semantic_bundle_tool(tmp_path):
     resp = json.loads(out.read())
     body = resp["result"]
     assert body["compiled_preview"]["input"]["thresholds"]["allow_min_resonance"] == 0.92
+    assert body["guided_upgrade"]["semantic_bundle"]["bundle_id"] == "strict_ward_probe"
 
 
 def test_mcp_integration_unknown_tool(tmp_path):
