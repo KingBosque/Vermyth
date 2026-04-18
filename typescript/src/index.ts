@@ -1,0 +1,11 @@
+export { AspectRegistry, getBasisVersion, setBasisVersion } from "./registry.js";
+export { CompositionEngine } from "./engine/composition.js";
+export { ResonanceEngine } from "./engine/resonance.js";
+export { Grimoire } from "./grimoire/store.js";
+export { buildTools, buildToolsFromEnv } from "./bootstrap.js";
+export { VermythMcpServer } from "./mcp/server.js";
+export { getToolDefinitions, isExperimentalToolsEnabled, createToolDispatch } from "./mcp/tool-handlers.js";
+export { TOOL_DEFINITIONS_BASE, TOOL_DEFINITIONS_EXPERIMENTAL } from "./mcp/tool-definitions.js";
+export { createVermythHttpServer, mainHttp } from "./adapters/http.js";
+export { TaskGateway } from "./adapters/a2a/gateway.js";
+export * from "./schema/enums.js";

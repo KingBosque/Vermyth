@@ -1,0 +1,52 @@
+{
+  "decision_id": "01JDECISIONABCDEFGHJKMNPQR",
+  "action": "ALLOW",
+  "rationale": "Golden parity: coherent cast above allow threshold.",
+  "cast_id": "01HZX8Q4K9ABCDEFGHJKMNPQRS",
+  "suggested_intent": null,
+  "parent_cast_id": null,
+  "divergence_status": null,
+  "narrative_coherence": null,
+  "thresholds": {
+    "allow_min_resonance": 0.75,
+    "reshape_min_resonance": 0.45,
+    "max_drift_status": "DRIFTING",
+    "scorer_weights": {
+      "resonance": 0.5,
+      "divergence": 0.2,
+      "narrative": 0.1,
+      "effect_risk": 0.2
+    },
+    "effect_risk_min_score": null
+  },
+  "scores": [
+    {
+      "name": "resonance",
+      "value": 0.82,
+      "weight": 0.5,
+      "explanation": "adjusted resonance 0.820"
+    },
+    {
+      "name": "divergence",
+      "value": 1,
+      "weight": 0.2,
+      "explanation": "divergence stable"
+    },
+    {
+      "name": "narrative",
+      "value": 0.5,
+      "weight": 0.1,
+      "explanation": "narrative n/a"
+    },
+    {
+      "name": "effect_risk",
+      "value": 0.9,
+      "weight": 0.2,
+      "explanation": "effect risk ok"
+    }
+  ],
+  "explanation": "aggregate=0.500; resonance=0.820, divergence=1.000, narrative=0.500, effect_risk=0.900",
+  "model_name": "rule_based",
+  "model_version": "1",
+  "timestamp": "2024-06-15T10:00:00.000Z"
+}

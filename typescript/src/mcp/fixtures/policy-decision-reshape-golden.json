@@ -1,0 +1,57 @@
+{
+  "decision_id": "01JRESHAPEABCDEFGHJKMNOPQ1",
+  "action": "RESHAPE",
+  "rationale": "Golden parity: partial coherence; suggest intent refinement.",
+  "cast_id": "01HZX8Q4K9ABCDEFGHJKMNPQR2",
+  "suggested_intent": {
+    "objective": "Refined objective for reshape",
+    "scope": "golden reshape scope",
+    "reversibility": "PARTIAL",
+    "side_effect_tolerance": "MEDIUM"
+  },
+  "parent_cast_id": null,
+  "divergence_status": null,
+  "narrative_coherence": 0.55,
+  "thresholds": {
+    "allow_min_resonance": 0.75,
+    "reshape_min_resonance": 0.45,
+    "max_drift_status": "DRIFTING",
+    "scorer_weights": {
+      "resonance": 0.5,
+      "divergence": 0.2,
+      "narrative": 0.1,
+      "effect_risk": 0.2
+    },
+    "effect_risk_min_score": null
+  },
+  "scores": [
+    {
+      "name": "resonance",
+      "value": 0.52,
+      "weight": 0.5,
+      "explanation": "adjusted resonance 0.520"
+    },
+    {
+      "name": "divergence",
+      "value": 0.85,
+      "weight": 0.2,
+      "explanation": "divergence drifting"
+    },
+    {
+      "name": "narrative",
+      "value": 0.4,
+      "weight": 0.1,
+      "explanation": "narrative weak"
+    },
+    {
+      "name": "effect_risk",
+      "value": 0.7,
+      "weight": 0.2,
+      "explanation": "effect risk moderate"
+    }
+  ],
+  "explanation": "aggregate=0.520; resonance=0.520, divergence=0.850, narrative=0.400, effect_risk=0.700",
+  "model_name": "rule_based",
+  "model_version": "1",
+  "timestamp": "2024-07-20T15:30:00.000Z"
+}

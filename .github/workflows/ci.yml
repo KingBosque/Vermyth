@@ -27,3 +27,31 @@ jobs:
 
       - name: Run tests
         run: pytest tests/
+
+  typescript:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install and sync assets
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run sync-assets
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test

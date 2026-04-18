@@ -1,0 +1,20 @@
+{
+  "cast_id": "01HZX8Q4K9ABCDEFGHJKMNPQRS",
+  "timestamp": "2024-06-01T12:34:56.789Z",
+  "verdict": "COHERENT",
+  "resonance": 0.7654,
+  "effect_class": "NEGATION",
+  "sigil_name": "ParityGolden",
+  "sigil_aspects": ["FORM", "VOID"],
+  "effect_description": "golden effect",
+  "casting_note": "golden note",
+  "incoherence_reason": null,
+  "proof": "parity-proof",
+  "projection_method": "PARTIAL",
+  "intent_confidence": 0.5,
+  "semantic_vector": [-0.95, 0.15, 0, 0, 0, 0],
+  "intent_vector": [0, 0, 0, 0, 0, 0],
+  "lineage": null,
+  "glyph_seed_id": null,
+  "provenance": null
+}
