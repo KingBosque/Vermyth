@@ -341,6 +341,7 @@ class VermythTools:
         branch_id: str | None = None,
         chained: bool = False,
         force: bool = False,
+        include_arcane_transcript: bool = False,
     ) -> dict[str, Any]:
         out = casting_tools.tool_cast(
             self,
@@ -350,6 +351,7 @@ class VermythTools:
             branch_id=branch_id,
             chained=chained,
             force=force,
+            include_arcane_transcript=include_arcane_transcript,
         )
         self._emit_event(
             "cast",
@@ -369,6 +371,7 @@ class VermythTools:
         *,
         parent_cast_id: str | None = None,
         branch_id: str | None = None,
+        include_arcane_transcript: bool = False,
     ) -> dict[str, Any]:
         return casting_tools.tool_fluid_cast(
             self,
@@ -376,6 +379,7 @@ class VermythTools:
             intent,
             parent_cast_id=parent_cast_id,
             branch_id=branch_id,
+            include_arcane_transcript=include_arcane_transcript,
         )
     def _write_fluid_result_to_grimoire(self, result: CastResult) -> None:
         return casting_tools._write_fluid_result_to_grimoire(self, result)
@@ -388,6 +392,7 @@ class VermythTools:
         target_resonance: float = 0.75,
         blend_alpha: float = 0.35,
         include_diagnostics: bool = False,
+        include_arcane_transcript: bool = False,
     ) -> dict[str, Any]:
         out = casting_tools.tool_auto_cast(
             self,
@@ -397,6 +402,7 @@ class VermythTools:
             target_resonance=target_resonance,
             blend_alpha=blend_alpha,
             include_diagnostics=include_diagnostics,
+            include_arcane_transcript=include_arcane_transcript,
         )
         chain = out.get("auto_cast_chain") or []
         for idx, row in enumerate(chain, start=1):

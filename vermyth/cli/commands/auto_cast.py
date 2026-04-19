@@ -4,7 +4,7 @@ import argparse
 import sys
 from typing import TYPE_CHECKING
 
-from vermyth.cli.format import format_cast_result
+from vermyth.cli.format import format_arcane_transcript, format_cast_result
 
 if TYPE_CHECKING:
     from vermyth.cli.main import VermythCLI
@@ -22,6 +22,7 @@ def cmd_auto_cast(
     target_resonance: float = 0.75,
     blend_alpha: float = 0.35,
     trace: bool = False,
+    include_arcane_transcript: bool = False,
 ) -> None:
     try:
         result = cli._tools.tool_auto_cast(
@@ -36,6 +37,7 @@ def cmd_auto_cast(
             target_resonance=target_resonance,
             blend_alpha=blend_alpha,
             include_diagnostics=bool(trace),
+            include_arcane_transcript=bool(include_arcane_transcript),
         )
         print(format_cast_result(result))
         chain = result.get("auto_cast_chain") or []
@@ -55,6 +57,9 @@ def cmd_auto_cast(
                 f"  converged={bool(diagnostics.get('converged', False))}, "
                 f"final_adjusted={float(diagnostics.get('final_adjusted', 0.0)):.4f}"
             )
+        if include_arcane_transcript and result.get("arcane_transcript") is not None:
+            print()
+            print(format_arcane_transcript(result["arcane_transcript"]))
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         sys.exit(1)
@@ -83,6 +88,12 @@ def register_subparsers(subs: argparse._SubParsersAction[argparse.ArgumentParser
     ac.add_argument("--target-resonance", type=float, default=0.75, dest="target_resonance")
     ac.add_argument("--blend-alpha", type=float, default=0.35, dest="blend_alpha")
     ac.add_argument("--trace", action="store_true", default=False)
+    ac.add_argument(
+        "--arcane-transcript",
+        action="store_true",
+        default=False,
+        help="Include presentation-only arcane transcript for the final cast (default off).",
+    )
 
 
 def _dispatch_auto_cast(cli: "VermythCLI", ns: argparse.Namespace) -> None:
@@ -96,6 +107,7 @@ def _dispatch_auto_cast(cli: "VermythCLI", ns: argparse.Namespace) -> None:
         target_resonance=float(ns.target_resonance),
         blend_alpha=float(ns.blend_alpha),
         trace=bool(ns.trace),
+        include_arcane_transcript=bool(ns.arcane_transcript),
     )
 
 

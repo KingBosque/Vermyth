@@ -62,6 +62,7 @@ class VermythCLI(CLIContract):
         fail_on_diverged: bool = False,
         chained: bool = False,
         force: bool = False,
+        include_arcane_transcript: bool = False,
     ) -> None:
         return cast_command.cmd_cast(
             self,
@@ -75,6 +76,7 @@ class VermythCLI(CLIContract):
             fail_on_diverged=fail_on_diverged,
             chained=chained,
             force=force,
+            include_arcane_transcript=include_arcane_transcript,
         )
     def cmd_decide(
         self,
@@ -114,6 +116,7 @@ class VermythCLI(CLIContract):
         parent_cast_id: Optional[str] = None,
         branch_id: Optional[str] = None,
         fail_on_diverged: bool = False,
+        include_arcane_transcript: bool = False,
     ) -> None:
         return cast_command.cmd_fluid_cast(
             self,
@@ -125,6 +128,7 @@ class VermythCLI(CLIContract):
             parent_cast_id=parent_cast_id,
             branch_id=branch_id,
             fail_on_diverged=fail_on_diverged,
+            include_arcane_transcript=include_arcane_transcript,
         )
     def cmd_auto_cast(
         self,
@@ -138,6 +142,7 @@ class VermythCLI(CLIContract):
         target_resonance: float = 0.75,
         blend_alpha: float = 0.35,
         trace: bool = False,
+        include_arcane_transcript: bool = False,
     ) -> None:
         return auto_cast_command.cmd_auto_cast(
             self,
@@ -150,6 +155,7 @@ class VermythCLI(CLIContract):
             target_resonance=target_resonance,
             blend_alpha=blend_alpha,
             trace=trace,
+            include_arcane_transcript=include_arcane_transcript,
         )
     def cmd_swarm_join(
         self, swarm_id: str, session_id: str, *, consensus_threshold: float = 0.75

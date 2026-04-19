@@ -1,5 +1,6 @@
 """Human-readable formatting for CLI output."""
 
+import json
 import textwrap
 
 from vermyth.schema import VerdictType  # noqa: F401 — required schema import per brief
@@ -10,6 +11,12 @@ def resonance_bar(score: float, width: int = 15) -> str:
     filled = int(round(s * width))
     filled = max(0, min(width, filled))
     return "█" * filled + "░" * (width - filled)
+
+
+def format_arcane_transcript(transcript: dict) -> str:
+    """Pretty-print a presentation-only arcane transcript (same structure as MCP ``arcane_transcript``)."""
+    header = "--- Arcane transcript (presentation-only; derived from cast result fields) ---"
+    return header + "\n" + json.dumps(transcript, indent=2)
 
 
 def format_cast_result(result: dict) -> str:

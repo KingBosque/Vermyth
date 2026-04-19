@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from ulid import ULID
 
+from vermyth.arcane.presentation.transcript import arcane_transcript_for_cast_result
 from vermyth.mcp.geometric import decode_packet, encode_response, validate_proof
 from vermyth.registry import AspectRegistry
 from vermyth.schema import (
@@ -63,7 +64,15 @@ TOOLS = [{'name': 'cast',
                                                             'channel key.'},
                                  'force': {'type': 'boolean',
                                            'description': 'If true, allow chained casts even when '
-                                                          'the channel is DECOHERENT.'}},
+                                                          'the channel is DECOHERENT.'},
+                                 'include_arcane_transcript': {'type': 'boolean',
+                                                               'description': 'If true, include '
+                                                                              'presentation-only '
+                                                                              'arcane_transcript '
+                                                                              '(derived from this '
+                                                                              'cast result; no '
+                                                                              'default wire '
+                                                                              'change).'}},
                   'required': ['aspects',
                                'objective',
                                'scope',
@@ -91,7 +100,11 @@ TOOLS = [{'name': 'cast',
                                                                     'MEDIUM',
                                                                     'HIGH']},
                                  'parent_cast_id': {'type': 'string'},
-                                 'branch_id': {'type': 'string'}},
+                                 'branch_id': {'type': 'string'},
+                                 'include_arcane_transcript': {'type': 'boolean',
+                                                               'description': 'If true, include '
+                                                                              'presentation-only '
+                                                                              'arcane_transcript.'}},
                   'required': ['vector',
                                'objective',
                                'scope',
@@ -108,7 +121,13 @@ TOOLS = [{'name': 'cast',
                                  'max_depth': {'type': 'integer'},
                                  'target_resonance': {'type': 'number'},
                                  'blend_alpha': {'type': 'number'},
-                                 'include_diagnostics': {'type': 'boolean'}},
+                                 'include_diagnostics': {'type': 'boolean'},
+                                 'include_arcane_transcript': {'type': 'boolean',
+                                                               'description': 'If true, include '
+                                                                              'presentation-only '
+                                                                              'arcane_transcript '
+                                                                              'for the final cast '
+                                                                              'in the chain.'}},
                   'required': ['vector',
                                'objective',
                                'scope',
@@ -190,6 +209,15 @@ def cast_result_to_dict(tools: "VermythTools", result: CastResult) -> dict[str, 
     return out
 
 
+def _attach_arcane_transcript_if_requested(
+    out: dict[str, Any],
+    result: CastResult,
+    include_arcane_transcript: bool,
+) -> None:
+    if include_arcane_transcript:
+        out["arcane_transcript"] = arcane_transcript_for_cast_result(result)
+
+
 def tool_cast(
     tools: "VermythTools",
     aspects: list[str],
@@ -199,6 +227,7 @@ def tool_cast(
     branch_id: str | None = None,
     chained: bool = False,
     force: bool = False,
+    include_arcane_transcript: bool = False,
 ) -> dict[str, Any]:
     try:
         registry = AspectRegistry.get()
@@ -374,6 +403,7 @@ def tool_cast(
                 )
                 tools._grimoire.write_seed(reset)
         tools._grimoire.write(result)
+        _attach_arcane_transcript_if_requested(out, result, include_arcane_transcript)
         return out
     except ValueError:
         raise
@@ -395,6 +425,7 @@ def tool_fluid_cast(
     *,
     parent_cast_id: str | None = None,
     branch_id: str | None = None,
+    include_arcane_transcript: bool = False,
 ) -> dict[str, Any]:
     try:
         if len(vector) < 6:
@@ -511,6 +542,7 @@ def tool_fluid_cast(
                 tools._grimoire.write_seed(reset)
 
         tools._grimoire.write(result)
+        _attach_arcane_transcript_if_requested(out, result, include_arcane_transcript)
         return out
     except ValueError:
         raise
@@ -595,6 +627,7 @@ def tool_auto_cast(
     target_resonance: float = 0.75,
     blend_alpha: float = 0.35,
     include_diagnostics: bool = False,
+    include_arcane_transcript: bool = False,
 ) -> dict[str, Any]:
     if len(vector) < 6:
         raise ValueError("vector must contain at least 6 floats")
@@ -631,6 +664,7 @@ def tool_auto_cast(
     out["auto_cast_depth"] = len(chain)
     if diagnostics is not None:
         out["diagnostics"] = diagnostics.model_dump(mode="json")
+    _attach_arcane_transcript_if_requested(out, chain[-1], include_arcane_transcript)
     return out
 
 
@@ -754,6 +788,7 @@ def dispatch_cast(tools: "VermythTools", arguments: dict[str, Any]) -> dict[str,
         branch_id=arguments.get("branch_id"),
         chained=bool(arguments.get("chained", False)),
         force=bool(arguments.get("force", False)),
+        include_arcane_transcript=bool(arguments.get("include_arcane_transcript", False)),
     )
 
 
@@ -769,6 +804,7 @@ def dispatch_fluid_cast(tools: "VermythTools", arguments: dict[str, Any]) -> dic
         },
         parent_cast_id=arguments.get("parent_cast_id"),
         branch_id=arguments.get("branch_id"),
+        include_arcane_transcript=bool(arguments.get("include_arcane_transcript", False)),
     )
 
 
@@ -786,6 +822,7 @@ def dispatch_auto_cast(tools: "VermythTools", arguments: dict[str, Any]) -> dict
         target_resonance=float(arguments.get("target_resonance", 0.75)),
         blend_alpha=float(arguments.get("blend_alpha", 0.35)),
         include_diagnostics=bool(arguments.get("include_diagnostics", False)),
+        include_arcane_transcript=bool(arguments.get("include_arcane_transcript", False)),
     )
 
 

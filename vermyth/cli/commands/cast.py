@@ -4,7 +4,7 @@ import argparse
 import sys
 from typing import TYPE_CHECKING
 
-from vermyth.cli.format import format_cast_result
+from vermyth.cli.format import format_arcane_transcript, format_cast_result
 
 if TYPE_CHECKING:
     from vermyth.cli.main import VermythCLI
@@ -23,6 +23,7 @@ def cmd_cast(
     fail_on_diverged: bool = False,
     chained: bool = False,
     force: bool = False,
+    include_arcane_transcript: bool = False,
 ) -> None:
     try:
         result = cli._tools.tool_cast(
@@ -37,8 +38,12 @@ def cmd_cast(
             branch_id=branch_id,
             chained=bool(chained),
             force=bool(force),
+            include_arcane_transcript=bool(include_arcane_transcript),
         )
         print(format_cast_result(result))
+        if include_arcane_transcript and result.get("arcane_transcript") is not None:
+            print()
+            print(format_arcane_transcript(result["arcane_transcript"]))
         if fail_on_diverged:
             lin = result.get("lineage") or {}
             div = lin.get("divergence") or {}
@@ -91,6 +96,12 @@ def register_subparsers(subs: argparse._SubParsersAction[argparse.ArgumentParser
     c.add_argument("--fail-on-diverged", action="store_true", default=False)
     c.add_argument("--chained", action="store_true", default=False)
     c.add_argument("--force", action="store_true", default=False)
+    c.add_argument(
+        "--arcane-transcript",
+        action="store_true",
+        default=False,
+        help="Include presentation-only arcane transcript (derived from cast result; default off).",
+    )
 
     fc = subs.add_parser("fluid-cast", help="Cast from a raw semantic vector.")
     fc.add_argument("--vector", nargs="+", type=float, required=True, metavar="F")
@@ -110,6 +121,12 @@ def register_subparsers(subs: argparse._SubParsersAction[argparse.ArgumentParser
     fc.add_argument("--parent", type=str, default=None, dest="parent_cast_id")
     fc.add_argument("--branch-id", type=str, default=None, dest="cast_branch_id")
     fc.add_argument("--fail-on-diverged", action="store_true", default=False)
+    fc.add_argument(
+        "--arcane-transcript",
+        action="store_true",
+        default=False,
+        help="Include presentation-only arcane transcript (derived from cast result; default off).",
+    )
 
 
 def _dispatch_cast(cli: "VermythCLI", ns: argparse.Namespace) -> None:
@@ -124,6 +141,7 @@ def _dispatch_cast(cli: "VermythCLI", ns: argparse.Namespace) -> None:
         fail_on_diverged=bool(ns.fail_on_diverged),
         chained=bool(ns.chained),
         force=bool(ns.force),
+        include_arcane_transcript=bool(ns.arcane_transcript),
     )
 
 
@@ -137,6 +155,7 @@ def _dispatch_fluid_cast(cli: "VermythCLI", ns: argparse.Namespace) -> None:
         parent_cast_id=ns.parent_cast_id,
         branch_id=ns.cast_branch_id,
         fail_on_diverged=bool(ns.fail_on_diverged),
+        include_arcane_transcript=bool(ns.arcane_transcript),
     )
 
 
@@ -157,6 +176,7 @@ def cmd_fluid_cast(
     parent_cast_id: str | None = None,
     branch_id: str | None = None,
     fail_on_diverged: bool = False,
+    include_arcane_transcript: bool = False,
 ) -> None:
     try:
         result = cli._tools.tool_fluid_cast(
@@ -169,8 +189,12 @@ def cmd_fluid_cast(
             },
             parent_cast_id=parent_cast_id,
             branch_id=branch_id,
+            include_arcane_transcript=bool(include_arcane_transcript),
         )
         print(format_cast_result(result))
+        if include_arcane_transcript and result.get("arcane_transcript") is not None:
+            print()
+            print(format_arcane_transcript(result["arcane_transcript"]))
         if fail_on_diverged:
             lin = result.get("lineage") or {}
             div = lin.get("divergence") or {}

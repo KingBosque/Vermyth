@@ -180,6 +180,8 @@ vermyth cast --aspects MIND LIGHT \
   --side-effect-tolerance HIGH
 ```
 
+Add **`--arcane-transcript`** to append a **presentation-only** phase transcript (JSON) derived from the same cast result fields—default output is unchanged. The same opt-in exists on **`fluid-cast`** and **`auto-cast`**.
+
 ### `query`
 
 Query the grimoire with optional filters (`--verdict`, `--min-resonance`, `--branch-id`, `--limit`).
@@ -225,6 +227,8 @@ Runs a **newline-delimited JSON-RPC 2.0** server on stdio (protocol subset: `ini
 With default configuration, **`main()`** builds a **`CompositionEngine`**, **`Grimoire()`** (default database under `~/.vermyth/grimoire.db`), and **`ResonanceEngine`** with env-driven backend selection (defaults to partial projection).
 
 Tool names exposed to clients focus on decision/casting/query/program/grimoire workflows. Experimental session/sync families are not part of the stable MCP contract. See `TOOL_DEFINITIONS` in `vermyth/mcp/tool_definitions.py` for the authoritative list.
+
+Casting tools **`cast`**, **`fluid_cast`**, and **`auto_cast`** support optional **`include_arcane_transcript: true`** in the request arguments; when set, the response includes an additive **`arcane_transcript`** object (presentation-only labels derived from the cast result). Omitting the flag leaves the default response shape unchanged.
 
 ### Experimental tools (gated)
 
